@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from Appointments import AppointmentsFrame
 from Dashboard import DashboardFrame
+from Nurses import NursesFrame
+from Doctors import DoctorsFrame
 
 class MainPage:
     def __init__(self, root):
@@ -37,7 +39,11 @@ class MainPage:
             ("Dashboard", lambda: self.raise_frame(DashboardFrame(self.main_area))),
             ("Patients", lambda: self.raise_frame(tk.Frame(self.main_area))),
             ("Appointments", lambda: self.raise_frame(AppointmentsFrame(self.main_area))),
-            ("Prescriptions", lambda: self.raise_frame(tk.Frame(self.main_area)))
+            ("Prescriptions", lambda: self.raise_frame(tk.Frame(self.main_area))),
+            ("Nurses", lambda: self.raise_frame(NursesFrame(self.main_area))),
+            ("Doctors", lambda: self.raise_frame(DoctorsFrame(self.main_area))) 
+
+
         ]
     
         for text, command in self.buttons:
