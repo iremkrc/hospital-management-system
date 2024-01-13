@@ -15,7 +15,7 @@ class PatientsFrame(tk.Frame):
         ttk.Label(self, text="SSN:").pack()
         ttk.Entry(self, textvariable=self.patient_ssn_var).pack()
         ttk.Label(self, text="Password:").pack()
-        ttk.Entry(self, textvariable=self.patient_ssn_var, show="*").pack()
+        ttk.Entry(self, textvariable=self.patient_password_var, show="*").pack()
         ttk.Button(self, text="Login", command=self.patient_login).pack(pady=10)
 
     def patient_login(self):
@@ -72,9 +72,6 @@ class PatientsFrame(tk.Frame):
         # Replace with actual data fetching function
         return ["Prescription 1", "Prescription 2", "Prescription 3"]
 
-    def go_back(self):
-        # Replace with navigation logic to go back to the previous page
-        pass
 
     def setup_main_menu(self):
         self.clear_ui()
