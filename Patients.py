@@ -1,69 +1,110 @@
 import tkinter as tk
-import sqlite3
+from tkinter import ttk, messagebox, scrolledtext
 
+class PatientsFrame(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.pack(fill="both", expand=True)
+        self.setup_login_ui()
 
-conn = sqlite3.connect('comp306project.db')
-cursor = conn.cursor()
+    def setup_login_ui(self):
+        self.login_label = ttk.Label(self, text="Patient Login", font=("Arial", 18))
+        self.login_label.pack(pady=10)
+        self.patient_ssn_var = tk.StringVar()
+        self.patient_password_var = tk.StringVar()
+        ttk.Label(self, text="SSN:").pack()
+        ttk.Entry(self, textvariable=self.patient_ssn_var).pack()
+        ttk.Label(self, text="Password:").pack()
+        ttk.Entry(self, textvariable=self.patient_ssn_var, show="*").pack()
+        ttk.Button(self, text="Login", command=self.patient_login).pack(pady=10)
 
-def fetch_patient():
-    patient_ssn = entry_patient_ssn.get()
-    if authenticate_ssn(patient_ssn):
-        query = "SELECT * FROM PATIENT WHERE PatientSSN = ?"
-        cursor.execute(query, (patient_ssn,))
-        patient_data = cursor.fetchone()
-        if patient_data:
-            display_patient_info(patient_data)
+    def patient_login(self):
+        patient_ssn = self.patient_ssn_var.get()
+        password = self.patient_password_var.get()
+
+        if not patient_ssn or not password:
+            messagebox.showerror("Login Failed", "Patient SSN and Password cannot be empty.")
+            return
+
+        if self.authenticate_patient(patient_ssn, password):
+            messagebox.showinfo("Login Successful", "Welcome!")
+            self.clear_login_ui()
+            self.setup_main_menu()
         else:
-            clear_patient_info()
-    else:
-        clear_patient_info()
-        patient_info.config(state=tk.NORMAL)
-        patient_info.insert(tk.END, "Authentication failed. Invalid SSN.\n")
-        patient_info.config(state=tk.DISABLED)
+            messagebox.showerror("Login Failed", "Invalid Patient SSN or password")
+
+    def authenticate_patient(self, ssn, password):
+        return True
+
+    def clear_ui(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+
+    def clear_login_ui(self):
+        for widget in self.winfo_children():
+            widget.destroy()
 
 
-def authenticate_ssn(ssn):
-    query = "SELECT PatientSSN FROM PATIENT WHERE PatientSSN = ?"
-    cursor.execute(query, (ssn,))
-    result = cursor.fetchone()
-    return result is not None
+    def load_patient_functions(self):
+        self.doctor_list_label = ttk.Label(self.functional_frame, text="Doctors", font=("Arial", 16))
+        self.doctor_list_label.pack(pady=10)
+        self.doctor_listbox = tk.Listbox(self.functional_frame)
+        self.doctor_listbox.pack(pady=10)
+        self.display_doctors()
+        self.appointment_list_label = ttk.Label(self.functional_frame, text="Appointments", font=("Arial", 16))
+        self.appointment_list_label.pack(pady=10)
+        self.appointment_listbox = tk.Listbox(self.functional_frame)
+        self.appointment_listbox.pack(pady=10)
+        self.update_patient_combobox()
 
 
+    def display_prescriptions(self):
+        prescriptions = self.get_prescriptions()  
+        self.prescriptions_listbox.delete(0, tk.END)
+        for prescription in prescriptions:
+            self.prescriptions_listbox.insert(tk.END, prescription)
 
-def display_patient_info(data):
-    clear_patient_info()
-    patient_info.config(state=tk.NORMAL)
-    patient_info.insert(tk.END, f"Patient SSN: {data[0]}\n")
-    patient_info.insert(tk.END, f"Name: {data[2]}\n")
-    patient_info.insert(tk.END, f"Birth Date: {data[3]}\n")
-    patient_info.insert(tk.END, f"Blood Type: {data[4]}\n")
-    patient_info.insert(tk.END, f"City: {data[5]}\n")
-    patient_info.insert(tk.END, f"Street: {data[6]}\n")
-    patient_info.insert(tk.END, f"State: {data[7]}\n")
-    patient_info.insert(tk.END, f"Sex: {data[8]}\n")
-    patient_info.config(state=tk.DISABLED)
+    def get_patient_info(self):
+        # Replace with actual data fetching function
+        return "Patient Information:\nName: John Doe\nAge: 30\nGender: Male\n"
 
-def clear_patient_info():
-    patient_info.config(state=tk.NORMAL)
-    patient_info.delete('1.0', tk.END)
-    patient_info.config(state=tk.DISABLED)
+    def get_prescriptions(self):
+        # Replace with actual data fetching function
+        return ["Prescription 1", "Prescription 2", "Prescription 3"]
 
+    def go_back(self):
+        # Replace with navigation logic to go back to the previous page
+        pass
 
-root = tk.Tk()
-root.title("Patient Information")
+    def setup_main_menu(self):
+        self.clear_ui()
+        ttk.Button(self, text="List Doctors", command=self.show_doctors_ui).pack(pady=10)
+        ttk.Button(self, text="List Appointments", command=self.show_appointments_ui).pack(pady=10)
+        ttk.Button(self, text="List Companions", command=self.show_companion_ui).pack(pady=10)
 
 
-label_patient_ssn = tk.Label(root, text="Enter Patient SSN:")
-label_patient_ssn.pack()
+    def show_doctors_ui(self):
+        self.clear_ui()
+        ttk.Label(self, text="Doctors", font=("Arial", 16)).pack(pady=10)
+        doctor_listbox = tk.Listbox(self)
+        doctor_listbox.pack(pady=10)
+        self.display_doctors(doctor_listbox)
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
-entry_patient_ssn = tk.Entry(root)
-entry_patient_ssn.pack()
+    def show_appointments_ui(self):
+        self.clear_ui()
+        ttk.Label(self, text="Appointments", font=("Arial", 16)).pack(pady=10)
+        appointment_listbox = tk.Listbox(self)
+        appointment_listbox.pack(pady=10)
+        self.display_appointments(appointment_listbox)
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
-button_fetch_patient = tk.Button(root, text="Fetch Patient", command=fetch_patient)
-button_fetch_patient.pack()
 
-patient_info = tk.Text(root, height=10, width=50)
-patient_info.pack()
-patient_info.config(state=tk.DISABLED)
+    def show_companion_ui(self):
+        self.clear_ui()
+        ttk.Label(self, text="Companions", font=("Arial", 16)).pack(pady=10)
+        companion_listbox = tk.Listbox(self)
+        companion_listbox.pack(pady=10)
+        self.display_appointments(companion_listbox)
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
-root.mainloop()
