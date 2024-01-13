@@ -75,18 +75,88 @@ class PatientsFrame(tk.Frame):
 
     def setup_main_menu(self):
         self.clear_ui()
-        ttk.Button(self, text="List Doctors", command=self.show_doctors_ui).pack(pady=10)
+        ttk.Button(self, text="Make Appointment", command=self.show_doctors_ui).pack(pady=10)
         ttk.Button(self, text="List Appointments", command=self.show_appointments_ui).pack(pady=10)
         ttk.Button(self, text="List Companions", command=self.show_companion_ui).pack(pady=10)
 
 
     def show_doctors_ui(self):
         self.clear_ui()
-        ttk.Label(self, text="Doctors", font=("Arial", 16)).pack(pady=10)
+        ttk.Label(self, text="Make Appointment", font=("Arial", 16)).pack(pady=10)
         doctor_listbox = tk.Listbox(self)
         doctor_listbox.pack(pady=10)
         self.display_doctors(doctor_listbox)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
+    def make_appointment(self):
+        selection = self.doctors_combobox.curselection()
+        if selection:
+            selected_doctor = self.doctors_combobox.get(selection[0])
+            appointment = self.appointment_text.get("1.0", tk.END).strip()
+            if appointment:
+                messagebox.showinfo("Appointment made", f"Appoinment made with  {selected_doctor}.")
+                self.appointment_text.delete("1.0", tk.END)
+            else:
+                messagebox.showerror("Error", "Please make an appointment.")
+        else:
+            messagebox.showerror("Error", "Please select a doctor.")
+
+    def show_make_appointment_ui(self):
+        self.clear_ui()
+        ttk.Label(self, text="Make Appointment", font=("Arial", 16)).pack(pady=10)
+        self.doctors_listbox = tk.Listbox(self)
+        self.doctors_listbox.pack(pady=10)
+        self.display_doctors()
+
+        self.selected_day_var = tk.StringVar()
+        ttk.Label(self, text="Select Day:").pack()
+        self.day_combobox = ttk.Combobox(self, textvariable=self.selected_day_var, state="readonly")
+        self.update_day_combobox()
+        self.day_combobox.pack()
+        self.display_days()
+
+        self.selected_time_var = tk.StringVar()
+        ttk.Label(self, text="Select Time:").pack()
+        self.time_combobox = ttk.Combobox(self, textvariable=self.selected_time_var, state="readonly")
+        self.update_time_combobox()
+        self.time_combobox.pack()
+        self.display_times()
+
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
+
+    def update_doctor_combobox(self):
+        doctor_names = ['Doctor A', 'Doctor B', 'Doctor C']
+        self.doctors_combobox['values'] = doctor_names
+
+    def update_day_combobox(self):
+        day_names = ['Monday', 'Tue', 'Wed']
+        self.day_combobox['values'] = day_names
+
+    def update_time_combobox(self):
+        time_names = ['12:00', '13:00', '15:00']
+        self.time_combobox['values'] = time_names
+
+
+    def display_doctors(self, listbox):
+        doctors = ['Doctor A', 'Doctor B', 'Doctor C']
+        listbox.delete(0, tk.END)
+        for doctor in doctors:
+            listbox.insert(tk.END, doctor)
+
+    def display_days(self, listbox):
+        days = ['Mon', 'Tue', 'Wed']
+        listbox.delete(0, tk.END)
+        for day in days:
+            listbox.insert(tk.END, day)
+
+
+    def display_times(self, listbox):
+        times = ['12:00', '13:00', '15:00']
+        listbox.delete(0, tk.END)
+        for time in times:
+            listbox.insert(tk.END, time)
+
 
     def show_appointments_ui(self):
         self.clear_ui()
@@ -102,6 +172,20 @@ class PatientsFrame(tk.Frame):
         ttk.Label(self, text="Companions", font=("Arial", 16)).pack(pady=10)
         companion_listbox = tk.Listbox(self)
         companion_listbox.pack(pady=10)
-        self.display_appointments(companion_listbox)
+        self.display_companion(companion_listbox)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
+
+    def display_appointments(self, listbox):
+        # appointments = get_appointments()
+        appointments = ["1", "2", "3"]
+        listbox.delete(0, tk.END)
+        for appointment in appointments:
+            listbox.insert(tk.END, appointment)
+
+
+    def display_companion(self, listbox):
+        companions = ['Companion A', 'Companion B', 'Companion C']
+        listbox.delete(0, tk.END)
+        for c in companions:
+            listbox.insert(tk.END, c)
