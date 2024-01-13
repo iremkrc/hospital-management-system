@@ -50,7 +50,7 @@ class PatientsFrame(tk.Frame):
         self.doctor_list_label.pack(pady=10)
         self.doctor_listbox = tk.Listbox(self.functional_frame)
         self.doctor_listbox.pack(pady=10)
-        self.display_doctors()
+        self.display_doctors(self.doctor_listbox)
         self.appointment_list_label = ttk.Label(self.functional_frame, text="Appointments", font=("Arial", 16))
         self.appointment_list_label.pack(pady=10)
         self.appointment_listbox = tk.Listbox(self.functional_frame)
@@ -75,18 +75,10 @@ class PatientsFrame(tk.Frame):
 
     def setup_main_menu(self):
         self.clear_ui()
-        ttk.Button(self, text="Make Appointment", command=self.show_doctors_ui).pack(pady=10)
+        ttk.Button(self, text="Make Appointment", command=self.show_make_appointment_ui).pack(pady=10)
         ttk.Button(self, text="List Appointments", command=self.show_appointments_ui).pack(pady=10)
         ttk.Button(self, text="List Companions", command=self.show_companion_ui).pack(pady=10)
 
-
-    def show_doctors_ui(self):
-        self.clear_ui()
-        ttk.Label(self, text="Make Appointment", font=("Arial", 16)).pack(pady=10)
-        doctor_listbox = tk.Listbox(self)
-        doctor_listbox.pack(pady=10)
-        self.display_doctors(doctor_listbox)
-        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def make_appointment(self):
         selection = self.doctors_combobox.curselection()
@@ -101,26 +93,27 @@ class PatientsFrame(tk.Frame):
         else:
             messagebox.showerror("Error", "Please select a doctor.")
 
+
     def show_make_appointment_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Make Appointment", font=("Arial", 16)).pack(pady=10)
         self.doctors_listbox = tk.Listbox(self)
         self.doctors_listbox.pack(pady=10)
-        self.display_doctors()
+        self.display_doctors(self.doctors_listbox)
 
         self.selected_day_var = tk.StringVar()
         ttk.Label(self, text="Select Day:").pack()
         self.day_combobox = ttk.Combobox(self, textvariable=self.selected_day_var, state="readonly")
         self.update_day_combobox()
         self.day_combobox.pack()
-        self.display_days()
+        self.display_days(self.day_combobox)
 
         self.selected_time_var = tk.StringVar()
         ttk.Label(self, text="Select Time:").pack()
         self.time_combobox = ttk.Combobox(self, textvariable=self.selected_time_var, state="readonly")
         self.update_time_combobox()
         self.time_combobox.pack()
-        self.display_times()
+        self.display_times(self.time_combobox)
 
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
