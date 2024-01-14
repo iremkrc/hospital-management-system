@@ -4,6 +4,7 @@ from Appointments import AppointmentsFrame
 from Dashboard import DashboardFrame
 from Nurses import NursesFrame
 from Doctors import DoctorsFrame
+from Patients import PatientsFrame
 
 class MainPage:
     def __init__(self, root):
@@ -37,7 +38,7 @@ class MainPage:
         # Sidebar buttons and commands
         self.buttons = [
             ("Dashboard", lambda: self.raise_frame(DashboardFrame(self.main_area))),
-            ("Patients", lambda: self.raise_frame(tk.Frame(self.main_area))),
+            ("Patients", lambda: self.raise_frame(PatientsFrame(self.main_area))),
             ("Appointments", lambda: self.raise_frame(AppointmentsFrame(self.main_area))),
             ("Prescriptions", lambda: self.raise_frame(tk.Frame(self.main_area))),
             ("Nurses", lambda: self.raise_frame(NursesFrame(self.main_area))),
