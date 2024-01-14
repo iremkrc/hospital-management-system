@@ -80,10 +80,10 @@ class PatientsFrame(tk.Frame):
         ttk.Button(self, text="List Companions", command=self.show_companion_ui).pack(pady=10)
 
 
-    def make_appointment(self):
-        selection = self.doctors_combobox.curselection()
+    '''def make_appointment(self):
+        selection = self.doctor_combobox.curselection()
         if selection:
-            selected_doctor = self.doctors_combobox.get(selection[0])
+            selected_doctor = self.doctor_combobox.get(selection[0])
             appointment = self.appointment_text.get("1.0", tk.END).strip()
             if appointment:
                 messagebox.showinfo("Appointment made", f"Appoinment made with  {selected_doctor}.")
@@ -91,15 +91,37 @@ class PatientsFrame(tk.Frame):
             else:
                 messagebox.showerror("Error", "Please make an appointment.")
         else:
+            messagebox.showerror("Error", "Please select a doctor.")'''
+
+    def make_appointment(self):
+        selected_doctor = self.selected_doctor_var.get()
+        appointment = self.appointment_text.get("1.0", tk.END).strip()
+
+        if selected_doctor:
+            messagebox.showinfo("Appointment made", f"Appointment made with {selected_doctor}.")
+            self.appointment_text.delete("1.0", tk.END)
+        else:
             messagebox.showerror("Error", "Please select a doctor.")
+
 
 
     def show_make_appointment_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Make Appointment", font=("Arial", 16)).pack(pady=10)
-        self.doctors_listbox = tk.Listbox(self)
+
+        self.selected_doctor_var = tk.StringVar()
+        ttk.Label(self, text="Select Doctor:").pack()
+        self.doctor_combobox = ttk.Combobox(self, textvariable=self.selected_doctor_var, state="readonly")
+        self.update_doctor_combobox()
+        self.doctor_combobox.pack()
+        self.display_doctors(self.doctor_combobox)
+
+        '''self.doctors_listbox = tk.Listbox(self)
         self.doctors_listbox.pack(pady=10)
-        self.display_doctors(self.doctors_listbox)
+        self.display_doctors(self.doctors_listbox)'''
+
+        self.appointment_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, width=40, height=10)
+        #self.appointment_text.pack(pady=10)
 
         self.selected_day_var = tk.StringVar()
         ttk.Label(self, text="Select Day:").pack()
@@ -114,16 +136,16 @@ class PatientsFrame(tk.Frame):
         self.update_time_combobox()
         self.time_combobox.pack()
         self.display_times(self.time_combobox)
-
+        ttk.Button(self, text="Make Appointment", command=self.make_appointment).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
 
     def update_doctor_combobox(self):
         doctor_names = ['Doctor A', 'Doctor B', 'Doctor C']
-        self.doctors_combobox['values'] = doctor_names
+        self.doctor_combobox['values'] = doctor_names
 
     def update_day_combobox(self):
-        day_names = ['Monday', 'Tue', 'Wed']
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thusday', 'Friday']
         self.day_combobox['values'] = day_names
 
     def update_time_combobox(self):
@@ -138,7 +160,7 @@ class PatientsFrame(tk.Frame):
             listbox.insert(tk.END, doctor)
 
     def display_days(self, listbox):
-        days = ['Mon', 'Tue', 'Wed']
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thusday', 'Friday']
         listbox.delete(0, tk.END)
         for day in days:
             listbox.insert(tk.END, day)
