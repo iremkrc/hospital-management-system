@@ -7,3 +7,4 @@ __pycache__/Doctors.cpython-310.pyc
 __pycache__/Dashboard.cpython-310.pyc
 __pycache__/Appointments.cpython-310.pyc
 .idea/workspace.xml
+*.pyc
