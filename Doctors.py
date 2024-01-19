@@ -1,11 +1,22 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
+import mysql.connector
 
 
 
 class DoctorsFrame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
+        self.patient_tree = None 
+        self.db_connection = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        passwd="password",
+        auth_plugin='mysql_native_password'
+        )
+        print(self.db_connection)
+        self.db_cursor = self.db_connection.cursor(buffered=True)
+        self.db_cursor.execute("USE comp306project")
         self.pack(fill="both", expand=True)
         self.selected_patient_var = tk.StringVar()
         self.setup_login_ui()
@@ -45,7 +56,6 @@ class DoctorsFrame(tk.Frame):
         self.patient_filter_var = tk.StringVar()
         self.patient_filter_entry = ttk.Entry(self.functional_frame, textvariable=self.patient_filter_var)
         self.patient_filter_entry.pack()
-        self.patient_filter_entry.bind("<Return>", self.filter_patients)
         self.patient_listbox = tk.Listbox(self.functional_frame)
         self.patient_listbox.pack(pady=10)
         self.display_patients()
@@ -63,7 +73,6 @@ class DoctorsFrame(tk.Frame):
         self.appointment_list_label.pack(pady=10)
         self.appointment_listbox = tk.Listbox(self.functional_frame)
         self.appointment_listbox.pack(pady=10)
-        self.update_patient_combobox()
 
     def clear_login_ui(self):
         for widget in self.winfo_children():
@@ -78,9 +87,14 @@ class DoctorsFrame(tk.Frame):
     def show_patients_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Patients", font=("Arial", 16)).pack(pady=10)
-        patient_listbox = tk.Listbox(self)
-        patient_listbox.pack(pady=10)
-        self.display_patients(patient_listbox)
+        
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
+        patient_tree = ttk.Treeview(self, columns=columns, show='headings')
+
+        for col in columns:
+            patient_tree.heading(col, text=col)
+            patient_tree.column(col, width=95)
+        self.display_patients(patient_tree)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def show_appointments_ui(self):
@@ -94,38 +108,42 @@ class DoctorsFrame(tk.Frame):
     def show_prescription_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Select Patient for Prescription", font=("Arial", 16)).pack(pady=10)
-        self.patient_listbox = tk.Listbox(self)
-        self.patient_listbox.pack(pady=10)
-        self.patient_listbox.bind('<<ListboxSelect>>', self.on_patient_selected)
-        self.display_patients(self.patient_listbox)
+
+        # Using Treeview instead of Listbox
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
+        self.patient_tree = ttk.Treeview(self, columns=columns, show='headings')
+
+        for col in columns:
+            self.patient_tree.heading(col, text=col)
+            self.patient_tree.column(col, width=95)
+        
+        # Display patients in the Treeview
+        self.display_patients(self.patient_tree)
+        self.patient_tree.pack(pady=10)
+        self.patient_tree.bind('<<TreeviewSelect>>', self.on_patient_selected)
+
         ttk.Label(self, text="Prescription:").pack()
         self.prescription_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=10)
         self.prescription_text.pack(pady=10)
+
         ttk.Button(self, text="Issue Prescription", command=self.issue_prescription).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
-
+    
     def on_patient_selected(self, event):
-        selection = self.patient_listbox.curselection()
-        if selection:
-            index = selection[0]
-            selected_patient = self.patient_listbox.get(index)
+        selected = event.widget.selection()
+        if selected:
+            index = selected[0]
+            selected_patient = event.widget.item(index)['values']
             self.selected_patient_var.set(selected_patient)
 
-    def filter_patients(self, event):
-        filter_text = self.patient_filter_var.get()
-        self.display_patients()
-
-    def update_patient_combobox(self):
-        patients = ['Patient A', 'Patient B', 'Patient C']
-        self.selected_patient_combobox['values'] = patients
-
     def issue_prescription(self):
-        selection = self.patient_listbox.curselection()
-        if selection:
-            selected_patient = self.patient_listbox.get(selection[0])
+        selected_items = self.patient_tree.selection()
+        if selected_items:
+            selected_patient = self.patient_tree.item(selected_items[0])['values']
             prescription = self.prescription_text.get("1.0", tk.END).strip()
             if prescription:
-                messagebox.showinfo("Prescription Issued", f"Prescription issued to {selected_patient}.")
+                patient_ssn = selected_patient[0]  # Assuming the SSN is the first item in the list
+                messagebox.showinfo("Prescription Issued", f"Prescription {prescription} issued to Patient {patient_ssn}.")
                 self.prescription_text.delete("1.0", tk.END)
             else:
                 messagebox.showerror("Error", "Please write a prescription.")
@@ -136,11 +154,15 @@ class DoctorsFrame(tk.Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
-    def display_patients(self, listbox):
-        patients = ['Patient A', 'Patient B', 'Patient C']
-        listbox.delete(0, tk.END)
+    def display_patients(self, patient_tree):
+        query = "SELECT * FROM patient"
+        self.db_cursor.execute(query)
+        patients = self.db_cursor.fetchall()
         for patient in patients:
-            listbox.insert(tk.END, patient)
+            patient_tree.insert("", 'end', values=(patient[0], patient[1], patient[2], patient[3], patient[4], patient[5], patient[6], patient[7], patient[8]))
+        
+        patient_tree.pack(pady=10)
+    
 
     def display_appointments(self, listbox):
         #appointments = get_appointments()
