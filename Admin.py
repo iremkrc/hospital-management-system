@@ -9,7 +9,7 @@ class AdminFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="24632463", 
+        passwd="write your own password",
         auth_plugin='mysql_native_password'
         )
         print(self.db_connection)
@@ -79,13 +79,14 @@ class AdminFrame(tk.Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
+
     def setup_main_menu(self):
         self.clear_ui()
         ttk.Button(self, text="List Patients", command=self.show_patients_ui).pack(pady=10)
         ttk.Button(self, text="List Doctors", command=self.show_doctors_ui).pack(pady=10)
         ttk.Button(self, text="List Nurses", command=self.show_nurses_ui).pack(pady=10)
         ttk.Button(self, text="Enter SQL Query", command=self.show_sql_ui).pack(pady=10)
-        ttk.Button(self, text="Others", command=self.show_other_ui).pack(pady=10)
+        ttk.Button(self, text="Others", command=self.show_queries_ui).pack(pady=10)
 
     """
     def show_patients_ui(self):
@@ -96,21 +97,89 @@ class AdminFrame(tk.Frame):
         self.display_patients(patient_listbox)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
     """
+
     def show_patients_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Patients", font=("Arial", 16)).pack(pady=10)
 
-        # Create the Treeview widget
-        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")  # Modify as per your patient attributes
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
         patient_tree = ttk.Treeview(self, columns=columns, show='headings')
-        
-        # Define the column headings
+
         for col in columns:
             patient_tree.heading(col, text=col)
-            patient_tree.column(col, width=95)  # Adjust the column widths as needed
+            patient_tree.column(col, width=95)
         self.display_patients(patient_tree)
-    
+
+        ttk.Button(self, text="Add Patient", command=self.add_patient_ui).pack(pady=10)
+
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
+    def add_patient_ui(self):
+        self.clear_ui()
+
+        ttk.Label(self, text="Patient SSN (Numeric)").pack(pady=2)
+        patient_ssn_var = tk.StringVar()
+        ttk.Entry(self, textvariable=patient_ssn_var).pack(pady=2)
+
+        ttk.Label(self, text="Phone Number").pack(pady=2)
+        phone_number_var = tk.StringVar()
+        ttk.Entry(self, textvariable=phone_number_var).pack(pady=2)
+
+        ttk.Label(self, text="Name").pack(pady=2)
+        name_var = tk.StringVar()
+        ttk.Entry(self, textvariable=name_var).pack(pady=2)
+
+        ttk.Label(self, text="Birth Date (YYYY-MM-DD)").pack(pady=2)
+        birth_date_var = tk.StringVar()
+        ttk.Entry(self, textvariable=birth_date_var).pack(pady=2)
+
+        ttk.Label(self, text="Blood Type (e.g., A+, O-)").pack(pady=2)
+        blood_type_var = tk.StringVar()
+        ttk.Entry(self, textvariable=blood_type_var).pack(pady=2)
+
+        ttk.Label(self, text="City").pack(pady=2)
+        city_var = tk.StringVar()
+        ttk.Entry(self, textvariable=city_var).pack(pady=2)
+
+        ttk.Label(self, text="Street").pack(pady=2)
+        street_var = tk.StringVar()
+        ttk.Entry(self, textvariable=street_var).pack(pady=2)
+
+        ttk.Label(self, text="State").pack(pady=2)
+        state_var = tk.StringVar()
+        ttk.Entry(self, textvariable=state_var).pack(pady=2)
+
+        ttk.Label(self, text="Sex (M/F)").pack(pady=2)
+        sex_var = tk.StringVar()
+        ttk.Entry(self, textvariable=sex_var).pack(pady=2)
+
+        ttk.Button(self, text="Submit", command=lambda: self.submit_patient_info(
+            patient_ssn_var.get(), phone_number_var.get(), name_var.get(),
+            birth_date_var.get(), blood_type_var.get(), city_var.get(), street_var.get(),
+            state_var.get(), sex_var.get())).pack(pady=10)
+
+    def submit_patient_info(self, patient_ssn_var, phone_number_var, name_var,
+                            birth_date_var, blood_type_var, city_var, street_var,
+                            state_var, sex_var):
+
+        query = """
+        INSERT INTO patient (PatientSSN, PhoneNumber, Name, BirthDate, BloodType, City, Street, State, Sex) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        data = (patient_ssn_var, phone_number_var, name_var,
+                birth_date_var, blood_type_var, city_var, street_var,
+                state_var, sex_var)
+
+        try:
+            self.db_cursor.execute(query, data)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Patient added to the system")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_patients_ui()
 
     def show_doctors_ui(self):
         self.clear_ui()
@@ -125,16 +194,13 @@ class AdminFrame(tk.Frame):
 
     def show_nurses_ui(self):
         self.clear_ui()
-
         ttk.Label(self, text="Nurses", font=("Arial", 16)).pack(pady=10)
-
-        # Create the Treeview widget
         columns = ("EmployeeId", "EmployeeSSN", "Name", "Sex", "BirthDate", "Salary", "HireDate", "City", "Street", "State")
         nurses_tree = ttk.Treeview(self, columns=columns, show='headings')
-        # Define the column headings
+
         for col in columns:
             nurses_tree.heading(col, text=col)
-            nurses_tree.column(col, width=95)  # Adjust the column widths as needed
+            nurses_tree.column(col, width=95)
         self.display_nurses(nurses_tree)
 
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
@@ -142,26 +208,193 @@ class AdminFrame(tk.Frame):
     def show_sql_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Enter an SQL query:", font=("Arial", 16)).pack(pady=10)
-        # Create a scrolled text box
         self.sql_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=5)
         self.sql_text.pack(pady=10)
         ttk.Button(self, text="Execute", command=self.execute_sql).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
         ttk.Label(self, text="Result:", font=("Arial", 16)).pack(pady=10)
-        # Make scrollbale listbox
         scrollbar = tk.Scrollbar(self)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.sql_listbox = tk.Listbox(self, yscrollcommand=scrollbar.set)
         self.sql_listbox.pack(pady=10)
 
-    
-    def show_other_ui(self):
+    def show_query_1_ui(self):
         self.clear_ui()
-        ttk.Button(self, text="Query1", command=self.show_patients_ui).pack(pady=10)
-        ttk.Button(self, text="Query2", command=self.show_doctors_ui).pack(pady=10)
-        ttk.Button(self, text="Query3", command=self.show_nurses_ui).pack(pady=10)
-        ttk.Button(self, text="Query4", command=self.show_sql_ui).pack(pady=10)
-        ttk.Button(self, text="Query5", command=self.show_other_ui).pack(pady=10)
+        query = """        
+        SELECT e.EmployeeId, e.State, e.Salary, e.Name, TopNurses.averageRating, experiencedNurses.numberOfCertificate
+        FROM EMPLOYEE e
+        JOIN (
+            SELECT RefereeNurseId, AVG(Rating) as averageRating
+            FROM NURSE_REFERENCES
+            GROUP BY RefereeNurseId
+            having averageRating >= 5
+        ) AS TopNurses ON e.EmployeeId = TopNurses.RefereeNurseId
+        JOIN NURSE n ON e.EmployeeId = n.EmployeeId
+        JOIN (
+            select n2.EmployeeId, COUNT(*) as numberOfCertificate
+            from NURSE n2, nurse_certificates nc
+            where n2.EmployeeId = nc.EmployeeId
+            group by n2.EmployeeId
+            having count(*) >= 2
+        ) AS experiencedNurses on e.EmployeeId = experiencedNurses.EmployeeId
+        WHERE (e.State = "Ohio")
+        ORDER BY TopNurses.averageRating DESC;
+        """
+        self.db_cursor.execute(query)
+        columns = [description[0] for description in self.db_cursor.description]
+        result = self.db_cursor.fetchall()
+
+        ttk.Label(self, text="Query 1 Result", font=("Arial", 16)).pack(pady=10)
+
+        # Creating a frame for the Treeview and Scrollbar
+        frame = ttk.Frame(self)
+        frame.pack(pady=10, fill=tk.BOTH, expand=True)
+
+        # Creating the Treeview widget
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Adding a horizontal scrollbar
+        h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        tree.configure(xscrollcommand=h_scroll.set)
+
+        # Defining the columns
+        for col in columns:
+            tree.heading(col, text=col.title())
+            tree.column(col, anchor=tk.CENTER, width=100)
+
+        # Inserting the rows
+        for row in result:
+            tree.insert('', tk.END, values=row)
+
+        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+    def show_query_2_ui(self):
+        self.clear_ui()
+        query = "select * from doctor where doctor.employeeid > 900000;"
+        self.db_cursor.execute(query)
+        columns = [description[0] for description in self.db_cursor.description]
+        result = self.db_cursor.fetchall()
+
+        ttk.Label(self, text="Query 2 Result", font=("Arial", 16)).pack(pady=10)
+
+        # Creating a frame for the Treeview and Scrollbar
+        frame = ttk.Frame(self)
+        frame.pack(pady=10, fill=tk.BOTH, expand=True)
+
+        # Creating the Treeview widget
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Adding a horizontal scrollbar
+        h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        tree.configure(xscrollcommand=h_scroll.set)
+
+        # Defining the columns
+        for col in columns:
+            tree.heading(col, text=col.title())
+            tree.column(col, anchor=tk.CENTER, width=100)
+
+        # Inserting the rows
+        for row in result:
+            tree.insert('', tk.END, values=row)
+
+        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+    def show_query_3_ui(self):
+        self.clear_ui()
+        query = "select * from doctor where doctor.employeeid > 900000;"
+        self.db_cursor.execute(query)
+        columns = [description[0] for description in self.db_cursor.description]
+        result = self.db_cursor.fetchall()
+
+        ttk.Label(self, text="Query 3 Result", font=("Arial", 16)).pack(pady=10)
+
+        # Creating a frame for the Treeview and Scrollbar
+        frame = ttk.Frame(self)
+        frame.pack(pady=10, fill=tk.BOTH, expand=True)
+
+        # Creating the Treeview widget
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Adding a horizontal scrollbar
+        h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        tree.configure(xscrollcommand=h_scroll.set)
+
+        # Defining the columns
+        for col in columns:
+            tree.heading(col, text=col.title())
+            tree.column(col, anchor=tk.CENTER, width=100)
+
+        # Inserting the rows
+        for row in result:
+            tree.insert('', tk.END, values=row)
+
+        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+    def show_query_4_ui(self):
+        self.clear_ui()
+        query = "select * from doctor where doctor.employeeid > 900000;"
+        self.db_cursor.execute(query)
+        columns = [description[0] for description in self.db_cursor.description]
+        result = self.db_cursor.fetchall()
+
+        ttk.Label(self, text="Query 4 Result", font=("Arial", 16)).pack(pady=10)
+
+        # Creating a frame for the Treeview and Scrollbar
+        frame = ttk.Frame(self)
+        frame.pack(pady=10, fill=tk.BOTH, expand=True)
+
+        # Creating the Treeview widget
+        tree = ttk.Treeview(frame, columns=columns, show='headings')
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Adding a horizontal scrollbar
+        h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        tree.configure(xscrollcommand=h_scroll.set)
+
+        # Defining the columns
+        for col in columns:
+            tree.heading(col, text=col.title())
+            tree.column(col, anchor=tk.CENTER, width=100)
+
+        # Inserting the rows
+        for row in result:
+            tree.insert('', tk.END, values=row)
+
+        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+    def show_query_5_ui(self):
+        self.clear_ui()
+        query = "select * from doctor where doctor.employeeid > 900000;"
+        self.db_cursor.execute(query)
+        columns = [description[0] for description in self.db_cursor.description]
+        result = self.db_cursor.fetchall()
+        ttk.Label(self, text="Query 5 Result", font=("Arial", 16)).pack(pady=10)
+        tree = ttk.Treeview(self, columns=columns, show='headings')
+        tree.pack(pady=10, fill=tk.BOTH, expand=True)
+
+        for col in columns:
+            tree.heading(col, text=col.title())
+            tree.column(col, anchor=tk.CENTER)
+
+        for row in result:
+            tree.insert('', tk.END, values=row)
+
+        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+    def show_queries_ui(self):
+        self.clear_ui()
+        ttk.Button(self, text="Query1", command=self.show_query_1_ui).pack(pady=10)
+        ttk.Button(self, text="Query2", command=self.show_query_2_ui).pack(pady=10)
+        ttk.Button(self, text="Query3", command=self.show_query_3_ui).pack(pady=10)
+        ttk.Button(self, text="Query4", command=self.show_query_4_ui).pack(pady=10)
+        ttk.Button(self, text="Query5", command=self.show_query_5_ui).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def on_patient_selected(self, event):
@@ -178,8 +411,6 @@ class AdminFrame(tk.Frame):
     def update_patient_combobox(self):
         patients = ['Patient A', 'Patient B', 'Patient C']
         self.selected_patient_combobox['values'] = patients
-
-
 
     def clear_ui(self):
         for widget in self.winfo_children():
