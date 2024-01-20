@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import mysql.connector
+import datetime
 
 
 
@@ -8,7 +9,8 @@ class DoctorsFrame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.patient_tree = None 
-        self.doctor_id = 10477 #hardcoded
+        self.current_date = datetime.date(2023, 10, 10)
+        #self.doctor_id = 10847 #hardcoded
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -20,6 +22,7 @@ class DoctorsFrame(tk.Frame):
         self.db_cursor.execute("USE comp306project")
         self.pack(fill="both", expand=True)
         self.selected_patient_var = tk.StringVar()
+        self.showing_upcoming = False 
         self.setup_login_ui()
 
     def setup_login_ui(self):
@@ -49,7 +52,15 @@ class DoctorsFrame(tk.Frame):
             messagebox.showerror("Login Failed", "Invalid Doctor ID or password")
 
     def authenticate_doctor(self, doctor_id, password):
-        return True 
+        query = "SELECT * FROM doctor WHERE doctor.employeeId = %s;"
+        self.db_cursor.execute(query, (doctor_id,))
+        doctor = self.db_cursor.fetchone()
+
+        if doctor and password == "1234":
+            self.doctor_id = doctor_id
+            return True
+        else:
+            return False
     
     def load_doctor_functions(self):
         self.patient_list_label = ttk.Label(self.functional_frame, text="Patients", font=("Arial", 16))
@@ -98,17 +109,54 @@ class DoctorsFrame(tk.Frame):
         self.display_patients(patient_tree)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
+    def clear_appointment_tree(self, appointment_tree):
+        for item in appointment_tree.get_children():
+            appointment_tree.delete(item)
+            
+    def toggle_appointments_view(self, appointment_tree, button):
+        self.clear_appointment_tree(appointment_tree) 
+
+        if self.showing_upcoming:
+            self.display_appointments(appointment_tree)
+            button.config(text="Show Upcoming Appointments")
+        else:
+            self.display_upcoming_appointments(appointment_tree)
+            button.config(text="Show All Appointments")
+        self.showing_upcoming = not self.showing_upcoming
+        
     def show_appointments_ui(self):
         self.clear_ui()
+        current_date_label = ttk.Label(self, text=f"Date: {self.current_date.strftime('%d.%m.%Y')}", font=("Arial", 12))
+        current_date_label.pack(side="top", anchor="ne", padx=10, pady=10)
         ttk.Label(self, text="My Appointments", font=("Arial", 16)).pack(pady=10)
-        columns = ("AppointmentID", "Duration", "Date", "Floor", "RoomNumber")
+        columns = ("AppointmentID", "Duration", "Date", "Floor", "RoomNumber", "PatientSSN", "Name")
         appointment_tree = ttk.Treeview(self, columns=columns, show='headings')
         for col in columns:
             appointment_tree.heading(col, text=col)
             appointment_tree.column(col, width=95)
         self.display_appointments(appointment_tree)
+        toggle_button = ttk.Button(self, text="Show Upcoming Appointments", 
+                                   command=lambda: self.toggle_appointments_view(appointment_tree, toggle_button))
+        toggle_button.pack(pady=5)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
+    def display_upcoming_appointments(self, appointment_tree):
+        query = """
+        SELECT a.AppointmentId, a.Duration, a.Date, a.Floor, a.RoomNumber, p.PatientSSN, p.Name
+        FROM appointment a 
+        JOIN participates pa ON a.AppointmentId = pa.AppointmentId 
+        JOIN doctor d ON pa.EmployeeId = d.EmployeeId 
+        JOIN patient p ON pa.PatientSSN = p.PatientSSN 
+        WHERE d.EmployeeId = %s AND a.Date >= %s;
+        """
+        self.db_cursor.execute(query, (self.doctor_id, self.current_date))
+        appointments = self.db_cursor.fetchall()
+        for i in appointment_tree.get_children():
+            appointment_tree.delete(i)
+        for appointment in appointments:
+            appointment_tree.insert("", 'end', values=(appointment[0], appointment[1], appointment[2], appointment[3], appointment[4], appointment[5], appointment[6]))
+
+            
     def show_prescription_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Select Patient for Prescription", font=("Arial", 16)).pack(pady=10)
@@ -155,7 +203,12 @@ class DoctorsFrame(tk.Frame):
             widget.destroy()
 
     def display_patients(self, patient_tree):
-        query = "SELECT * FROM patient p JOIN participates par ON p.PatientSSN = par.PatientSSN JOIN doctor d ON par.EmployeeId = d.EmployeeId WHERE d.EmployeeId = %s;"
+        query = """
+        SELECT * 
+        FROM patient p 
+        JOIN participates par ON p.PatientSSN = par.PatientSSN 
+        JOIN doctor d ON par.EmployeeId = d.EmployeeId 
+        WHERE d.EmployeeId = %s;"""
         self.db_cursor.execute(query, (self.doctor_id,))
         patients = self.db_cursor.fetchall()
         for patient in patients:
@@ -165,9 +218,17 @@ class DoctorsFrame(tk.Frame):
     
 
     def display_appointments(self, appointment_tree):
-        query = "SELECT a.AppointmentId, a.Duration, a.Date, a.Floor, a.RoomNumber FROM appointment a JOIN participates p ON a.AppointmentId = p.AppointmentId JOIN doctor d ON p.EmployeeId = d.EmployeeId WHERE d.EmployeeId = %s;"
+        query = """
+        SELECT a.AppointmentId, a.Duration, a.Date, a.Floor, a.RoomNumber, p.PatientSSN, p.Name
+        FROM appointment a
+        JOIN participates pa ON a.AppointmentId = pa.AppointmentId
+        JOIN doctor d ON pa.EmployeeId = d.EmployeeId
+        JOIN patient p ON pa.PatientSSN = p.PatientSSN
+        WHERE d.EmployeeId = %s;
+        """
         self.db_cursor.execute(query, (self.doctor_id,))
         appointments = self.db_cursor.fetchall()
         for appointment in appointments:
-            appointment_tree.insert("", 'end', values=(appointment[0], appointment[1], appointment[2], appointment[3], appointment[4]))
+            appointment_tree.insert("", 'end', values=(appointment[0], appointment[1], appointment[2], appointment[3], appointment[4], appointment[5], appointment[6]))
+
         appointment_tree.pack(pady=10)
