@@ -8,6 +8,7 @@ class DoctorsFrame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.patient_tree = None 
+        self.doctor_id = 10477 #hardcoded
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -80,13 +81,13 @@ class DoctorsFrame(tk.Frame):
 
     def setup_main_menu(self):
         self.clear_ui()
-        ttk.Button(self, text="List Patients", command=self.show_patients_ui).pack(pady=10)
-        ttk.Button(self, text="List Appointments", command=self.show_appointments_ui).pack(pady=10)
+        ttk.Button(self, text="Show My Patients", command=self.show_patients_ui).pack(pady=10)
+        ttk.Button(self, text="Show My Appointments", command=self.show_appointments_ui).pack(pady=10)
         ttk.Button(self, text="Issue Prescription", command=self.show_prescription_ui).pack(pady=10)
 
     def show_patients_ui(self):
         self.clear_ui()
-        ttk.Label(self, text="Patients", font=("Arial", 16)).pack(pady=10)
+        ttk.Label(self, text="My Patients", font=("Arial", 16)).pack(pady=10)
         
         columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
         patient_tree = ttk.Treeview(self, columns=columns, show='headings')
@@ -99,25 +100,24 @@ class DoctorsFrame(tk.Frame):
 
     def show_appointments_ui(self):
         self.clear_ui()
-        ttk.Label(self, text="Appointments", font=("Arial", 16)).pack(pady=10)
-        appointment_listbox = tk.Listbox(self)
-        appointment_listbox.pack(pady=10)
-        self.display_appointments(appointment_listbox)
+        ttk.Label(self, text="My Appointments", font=("Arial", 16)).pack(pady=10)
+        columns = ("AppointmentID", "Duration", "Date", "Floor", "RoomNumber")
+        appointment_tree = ttk.Treeview(self, columns=columns, show='headings')
+        for col in columns:
+            appointment_tree.heading(col, text=col)
+            appointment_tree.column(col, width=95)
+        self.display_appointments(appointment_tree)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def show_prescription_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Select Patient for Prescription", font=("Arial", 16)).pack(pady=10)
-
-        # Using Treeview instead of Listbox
         columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
         self.patient_tree = ttk.Treeview(self, columns=columns, show='headings')
 
         for col in columns:
             self.patient_tree.heading(col, text=col)
             self.patient_tree.column(col, width=95)
-        
-        # Display patients in the Treeview
         self.display_patients(self.patient_tree)
         self.patient_tree.pack(pady=10)
         self.patient_tree.bind('<<TreeviewSelect>>', self.on_patient_selected)
@@ -142,8 +142,8 @@ class DoctorsFrame(tk.Frame):
             selected_patient = self.patient_tree.item(selected_items[0])['values']
             prescription = self.prescription_text.get("1.0", tk.END).strip()
             if prescription:
-                patient_ssn = selected_patient[0]  # Assuming the SSN is the first item in the list
-                messagebox.showinfo("Prescription Issued", f"Prescription {prescription} issued to Patient {patient_ssn}.")
+                patient_name = selected_patient[2]
+                messagebox.showinfo("Prescription Issued", f"Prescription {prescription} issued to Patient {patient_name}.")
                 self.prescription_text.delete("1.0", tk.END)
             else:
                 messagebox.showerror("Error", "Please write a prescription.")
@@ -155,8 +155,8 @@ class DoctorsFrame(tk.Frame):
             widget.destroy()
 
     def display_patients(self, patient_tree):
-        query = "SELECT * FROM patient"
-        self.db_cursor.execute(query)
+        query = "SELECT * FROM patient p JOIN participates par ON p.PatientSSN = par.PatientSSN JOIN doctor d ON par.EmployeeId = d.EmployeeId WHERE d.EmployeeId = %s;"
+        self.db_cursor.execute(query, (self.doctor_id,))
         patients = self.db_cursor.fetchall()
         for patient in patients:
             patient_tree.insert("", 'end', values=(patient[0], patient[1], patient[2], patient[3], patient[4], patient[5], patient[6], patient[7], patient[8]))
@@ -164,9 +164,10 @@ class DoctorsFrame(tk.Frame):
         patient_tree.pack(pady=10)
     
 
-    def display_appointments(self, listbox):
-        #appointments = get_appointments()
-        appointments = ["1", "2", "3"]
-        listbox.delete(0, tk.END)
+    def display_appointments(self, appointment_tree):
+        query = "SELECT a.AppointmentId, a.Duration, a.Date, a.Floor, a.RoomNumber FROM appointment a JOIN participates p ON a.AppointmentId = p.AppointmentId JOIN doctor d ON p.EmployeeId = d.EmployeeId WHERE d.EmployeeId = %s;"
+        self.db_cursor.execute(query, (self.doctor_id,))
+        appointments = self.db_cursor.fetchall()
         for appointment in appointments:
-            listbox.insert(tk.END, appointment)
+            appointment_tree.insert("", 'end', values=(appointment[0], appointment[1], appointment[2], appointment[3], appointment[4]))
+        appointment_tree.pack(pady=10)
