@@ -17,7 +17,6 @@ class NursesFrame(tk.Frame):
         passwd="password",
         auth_plugin='mysql_native_password'
         )
-        print(self.db_connection)
         self.db_cursor = self.db_connection.cursor(buffered=True)
         self.db_cursor.execute("USE comp306project")
         self.pack(fill="both", expand=True)
@@ -298,12 +297,10 @@ class NursesFrame(tk.Frame):
             self.db_cursor.execute(query_check, (referee_nurse_id, referrer_nurse_id))
             existing_reference = self.db_cursor.fetchone()
             if existing_reference:
-                # Update the existing reference if it exists
                 query_update = "UPDATE nurse_references SET Rating = %s WHERE RefereeNurseId = %s AND RefererNurseId = %s;"
                 values_update = (int(points), referee_nurse_id, referrer_nurse_id)
                 self.db_cursor.execute(query_update, values_update)
             else:
-                # Insert a new reference if it doesn't exist
                 query_insert = "INSERT INTO nurse_references (RefereeNurseId, RefererNurseId, Rating) VALUES (%s, %s, %s);"
                 values_insert = (referee_nurse_id, referrer_nurse_id, int(points))
                 self.db_cursor.execute(query_insert, values_insert)

@@ -17,7 +17,6 @@ class DoctorsFrame(tk.Frame):
         passwd="password",
         auth_plugin='mysql_native_password'
         )
-        print(self.db_connection)
         self.db_cursor = self.db_connection.cursor(buffered=True)
         self.db_cursor.execute("USE comp306project")
         self.pack(fill="both", expand=True)

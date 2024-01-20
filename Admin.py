@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import mysql.connector
@@ -12,10 +13,9 @@ class AdminFrame(tk.Frame):
         passwd="write your own password",
         auth_plugin='mysql_native_password'
         )
-        print(self.db_connection)
         self.db_cursor = self.db_connection.cursor(buffered=True)
         self.db_cursor.execute("USE comp306project")
-
+        self.selected_nurse_info = None
         self.pack(fill="both", expand=True)
         self.selected_patient_var = tk.StringVar()
         self.setup_login_ui()
@@ -158,6 +158,8 @@ class AdminFrame(tk.Frame):
             birth_date_var.get(), blood_type_var.get(), city_var.get(), street_var.get(),
             state_var.get(), sex_var.get())).pack(pady=10)
 
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
     def submit_patient_info(self, patient_ssn_var, phone_number_var, name_var,
                             birth_date_var, blood_type_var, city_var, street_var,
                             state_var, sex_var):
@@ -190,20 +192,272 @@ class AdminFrame(tk.Frame):
             doctors_tree.heading(col, text=col)
             doctors_tree.column(col, width=95)
         self.display_doctors(doctors_tree)
+        ttk.Button(self, text="Add Doctor", command=self.add_doctor_ui).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
+    def add_doctor_ui(self):
+        self.clear_ui()
+
+        row = 0
+        col = 0
+
+        ttk.Label(self, text="Employee SSN (Numeric)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        employee_ssn_var = tk.StringVar()
+        ttk.Entry(self, textvariable=employee_ssn_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Name").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        name_var = tk.StringVar()
+        ttk.Entry(self, textvariable=name_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Sex (M/F)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        sex_var = tk.StringVar()
+        ttk.Entry(self, textvariable=sex_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Birth Date (YYYY-MM-DD)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        birth_date_var = tk.StringVar()
+        ttk.Entry(self, textvariable=birth_date_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Salary (Real)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        salary_var = tk.StringVar()
+        ttk.Entry(self, textvariable=salary_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Hire Date (YYYY-MM-DD)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        hire_date_var = tk.StringVar()
+        ttk.Entry(self, textvariable=hire_date_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="City").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        city_var = tk.StringVar()
+        ttk.Entry(self, textvariable=city_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Street").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        street_var = tk.StringVar()
+        ttk.Entry(self, textvariable=street_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="State").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        state_var = tk.StringVar()
+        ttk.Entry(self, textvariable=state_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Title").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        title_var = tk.StringVar()
+        ttk.Entry(self, textvariable=title_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Expertise").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        expertise_var = tk.StringVar()
+        ttk.Entry(self, textvariable=expertise_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Bonus").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        bonus_var = tk.StringVar()
+        ttk.Entry(self, textvariable=bonus_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Button(self, text="Submit", command=lambda: self.submit_doctor_info(
+            employee_ssn_var.get(), name_var.get(), sex_var.get(),
+            birth_date_var.get(), salary_var.get(), hire_date_var.get(), city_var.get(),
+            street_var.get(), state_var.get(), title_var.get(), expertise_var.get(), bonus_var.get())
+                   ).grid(row=row, column=col, padx=5, pady=10, columnspan=2)
+
+        row += 1
+
+        ttk.Button(self, text="Back", command=self.setup_main_menu).grid(row=row, column=col, padx=5, pady=10,
+                                                                         columnspan=2)
+
+    def submit_doctor_info(self, employee_ssn_var, name_var, sex_var,
+                            birth_date_var, salary_var, hire_date_var, city_var,
+                            street_var, state_var, title_var, expertise_var, bonus_var):
+
+        query_1 = """
+        INSERT INTO employee (EmployeeId, EmployeeSSN, Name, Sex, BirthDate, Salary, HireDate, City, Street, State) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        query_2 = """
+        INSERT INTO doctor (EmployeeId, Title, Expertise, Bonus)
+        VALUES (%s, %s, %s, %s)
+        """
+        employeeId = random.randint(10**7, 10**8)
+        data_1 = (employeeId, employee_ssn_var, name_var,
+                sex_var, birth_date_var, salary_var, hire_date_var,
+                city_var, street_var, state_var)
+        data_2 = (employeeId, title_var, expertise_var, bonus_var)
+
+        try:
+            self.db_cursor.execute(query_1, data_1)
+            self.db_cursor.execute(query_2, data_2)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Doctor added to the system")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_doctors_ui()
 
     def show_nurses_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Nurses", font=("Arial", 16)).pack(pady=10)
-        columns = ("EmployeeId", "EmployeeSSN", "Name", "Sex", "BirthDate", "Salary", "HireDate", "City", "Street", "State")
+
+        columns = (
+        "EmployeeId", "EmployeeSSN", "Name", "Sex", "BirthDate", "Salary", "HireDate", "City", "Street", "State")
         nurses_tree = ttk.Treeview(self, columns=columns, show='headings')
 
         for col in columns:
             nurses_tree.heading(col, text=col)
             nurses_tree.column(col, width=95)
-        self.display_nurses(nurses_tree)
 
+        def on_nurse_selected(event):
+            selected_item = nurses_tree.selection()[0]
+            self.selected_nurse_info = nurses_tree.item(selected_item)['values']
+
+        nurses_tree.bind("<<TreeviewSelect>>", on_nurse_selected)
+        self.display_nurses(nurses_tree)
+        ttk.Button(self, text="Add Nurse", command=self.add_nurse_ui).pack(pady=10)
+        ttk.Button(self, text="Add Certificate", command=self.add_certificate_ui).pack(pady=10)
+        ttk.Button(self, text="Delete Nurse", command=self.delete_nurse_query).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
+    def add_certificate_ui(self):
+        self.clear_ui()
+
+        ttk.Label(self, text="Certificate").pack()
+        certificate_var = tk.StringVar()
+        certificate_entry = ttk.Entry(self, textvariable=certificate_var)
+        certificate_entry.pack()
+
+        ttk.Button(self, text="Add Certificate",
+                   command=lambda: self.add_certificate_query(certificate_var.get())).pack()
+        ttk.Button(self, text="Back", command=self.show_nurses_ui).pack()
+
+    def add_certificate_query(self, certificate_var):
+        employee_id = self.selected_nurse_info[0]
+        query = """
+        INSERT INTO nurse_certificates (EmployeeId, Certificate) 
+        VALUES (%s, %s)
+        """
+        data = (employee_id, certificate_var)
+        try:
+            self.db_cursor.execute(query, data)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Certification is added.")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_nurses_ui()
+
+    def delete_nurse_query(self):
+        employee_id = self.selected_nurse_info[0]
+        query_1 = "DELETE FROM nurse where EmployeeId = " + str(employee_id)
+        query_2 = "DELETE FROM employee where EmployeeId = " + str(employee_id)
+        try:
+            self.db_cursor.execute(query_1)
+            self.db_cursor.execute(query_2)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Nurse deleted")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_nurses_ui()
+
+    def add_nurse_ui(self):
+        self.clear_ui()
+
+        row = 0
+        col = 0
+
+        ttk.Label(self, text="Employee SSN (Numeric)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        employee_ssn_var = tk.StringVar()
+        ttk.Entry(self, textvariable=employee_ssn_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Name").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        name_var = tk.StringVar()
+        ttk.Entry(self, textvariable=name_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Sex (M/F)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        sex_var = tk.StringVar()
+        ttk.Entry(self, textvariable=sex_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Birth Date (YYYY-MM-DD)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        birth_date_var = tk.StringVar()
+        ttk.Entry(self, textvariable=birth_date_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Salary (Real)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        salary_var = tk.StringVar()
+        ttk.Entry(self, textvariable=salary_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Hire Date (YYYY-MM-DD)").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        hire_date_var = tk.StringVar()
+        ttk.Entry(self, textvariable=hire_date_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="City").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        city_var = tk.StringVar()
+        ttk.Entry(self, textvariable=city_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="Street").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        street_var = tk.StringVar()
+        ttk.Entry(self, textvariable=street_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Label(self, text="State").grid(row=row, column=col, padx=5, pady=5, sticky='w')
+        state_var = tk.StringVar()
+        ttk.Entry(self, textvariable=state_var).grid(row=row, column=col + 1, padx=5, pady=5)
+        row += 1
+
+        ttk.Button(self, text="Submit", command=lambda: self.submit_nurse_info(
+            employee_ssn_var.get(), name_var.get(), sex_var.get(),
+            birth_date_var.get(), salary_var.get(), hire_date_var.get(), city_var.get(),
+            street_var.get(), state_var.get())).grid(row=row, column=col, padx=5, pady=10, columnspan=2)
+
+        row += 1
+
+        ttk.Button(self, text="Back", command=self.setup_main_menu).grid(row=row, column=col, padx=5, pady=10,
+                                                                         columnspan=2)
+
+    def submit_nurse_info(self, employee_ssn_var, name_var, sex_var,
+                            birth_date_var, salary_var, hire_date_var, city_var,
+                            street_var, state_var):
+
+        query_1 = """
+        INSERT INTO employee (EmployeeId, EmployeeSSN, Name, Sex, BirthDate, Salary, HireDate, City, Street, State) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        query_2 = """
+        INSERT INTO nurse (EmployeeId)
+        VALUES (%s)
+        """
+        employeeId = random.randint(10**7, 10**8)
+        data_1 = (employeeId, employee_ssn_var, name_var,
+                sex_var, birth_date_var, salary_var, hire_date_var,
+                city_var, street_var, state_var)
+        data_2 = (employeeId, )
+
+        try:
+            self.db_cursor.execute(query_1, data_1)
+            self.db_cursor.execute(query_2, data_2)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Nurse added to the system")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_nurses_ui()
+
 
     def show_sql_ui(self):
         self.clear_ui()
@@ -246,25 +500,20 @@ class AdminFrame(tk.Frame):
 
         ttk.Label(self, text="Query 1 Result", font=("Arial", 16)).pack(pady=10)
 
-        # Creating a frame for the Treeview and Scrollbar
         frame = ttk.Frame(self)
         frame.pack(pady=10, fill=tk.BOTH, expand=True)
 
-        # Creating the Treeview widget
         tree = ttk.Treeview(frame, columns=columns, show='headings')
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Adding a horizontal scrollbar
         h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
         h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
         tree.configure(xscrollcommand=h_scroll.set)
 
-        # Defining the columns
         for col in columns:
             tree.heading(col, text=col.title())
             tree.column(col, anchor=tk.CENTER, width=100)
 
-        # Inserting the rows
         for row in result:
             tree.insert('', tk.END, values=row)
 
@@ -279,25 +528,20 @@ class AdminFrame(tk.Frame):
 
         ttk.Label(self, text="Query 2 Result", font=("Arial", 16)).pack(pady=10)
 
-        # Creating a frame for the Treeview and Scrollbar
         frame = ttk.Frame(self)
         frame.pack(pady=10, fill=tk.BOTH, expand=True)
 
-        # Creating the Treeview widget
         tree = ttk.Treeview(frame, columns=columns, show='headings')
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Adding a horizontal scrollbar
         h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
         h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
         tree.configure(xscrollcommand=h_scroll.set)
 
-        # Defining the columns
         for col in columns:
             tree.heading(col, text=col.title())
             tree.column(col, anchor=tk.CENTER, width=100)
 
-        # Inserting the rows
         for row in result:
             tree.insert('', tk.END, values=row)
 
@@ -312,25 +556,20 @@ class AdminFrame(tk.Frame):
 
         ttk.Label(self, text="Query 3 Result", font=("Arial", 16)).pack(pady=10)
 
-        # Creating a frame for the Treeview and Scrollbar
         frame = ttk.Frame(self)
         frame.pack(pady=10, fill=tk.BOTH, expand=True)
 
-        # Creating the Treeview widget
         tree = ttk.Treeview(frame, columns=columns, show='headings')
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Adding a horizontal scrollbar
         h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
         h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
         tree.configure(xscrollcommand=h_scroll.set)
 
-        # Defining the columns
         for col in columns:
             tree.heading(col, text=col.title())
             tree.column(col, anchor=tk.CENTER, width=100)
 
-        # Inserting the rows
         for row in result:
             tree.insert('', tk.END, values=row)
 
@@ -345,25 +584,20 @@ class AdminFrame(tk.Frame):
 
         ttk.Label(self, text="Query 4 Result", font=("Arial", 16)).pack(pady=10)
 
-        # Creating a frame for the Treeview and Scrollbar
         frame = ttk.Frame(self)
         frame.pack(pady=10, fill=tk.BOTH, expand=True)
 
-        # Creating the Treeview widget
         tree = ttk.Treeview(frame, columns=columns, show='headings')
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Adding a horizontal scrollbar
         h_scroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
         h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
         tree.configure(xscrollcommand=h_scroll.set)
 
-        # Defining the columns
         for col in columns:
             tree.heading(col, text=col.title())
             tree.column(col, anchor=tk.CENTER, width=100)
 
-        # Inserting the rows
         for row in result:
             tree.insert('', tk.END, values=row)
 
@@ -443,13 +677,11 @@ class AdminFrame(tk.Frame):
         nurse_tree.pack(pady=10)
 
     def execute_sql(self):
-        # Clear the listbox
         self.sql_listbox.delete(0, tk.END)
         sql = self.sql_text.get("1.0", tk.END)
         try:
             self.db_cursor.execute(sql)
             results = self.db_cursor.fetchall()
-            print(results)
             for name in results:
                 self.sql_listbox.insert(tk.END, name)
         except Exception as e:

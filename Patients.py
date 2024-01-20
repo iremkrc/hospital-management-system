@@ -65,11 +65,9 @@ class PatientsFrame(tk.Frame):
             self.prescriptions_listbox.insert(tk.END, prescription)
 
     def get_patient_info(self):
-        # Replace with actual data fetching function
         return "Patient Information:\nName: John Doe\nAge: 30\nGender: Male\n"
 
     def get_prescriptions(self):
-        # Replace with actual data fetching function
         return ["Prescription 1", "Prescription 2", "Prescription 3"]
 
 
@@ -121,7 +119,6 @@ class PatientsFrame(tk.Frame):
         self.display_doctors(self.doctors_listbox)'''
 
         self.appointment_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, width=40, height=10)
-        #self.appointment_text.pack(pady=10)
 
         self.selected_day_var = tk.StringVar()
         ttk.Label(self, text="Select Day:").pack()

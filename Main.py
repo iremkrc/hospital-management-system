@@ -13,30 +13,23 @@ class MainPage:
         self.root.title("Hospital Management System")
         self.root.geometry('1200x700')
 
-        # Initialize the sidebar state
         self.sidebar_open = True
 
-        # Define a style
         style = ttk.Style()
         style.configure('TButton', font=('Arial', 14))
         style.configure('TLabel', font=('Arial', 12))
 
-        # Create a header
         self.create_header()
 
-        # Create a toggle button for the sidebar
         self.toggle_button = ttk.Button(root, text="✕", command=self.toggle_sidebar)
         self.toggle_button.pack(anchor="nw")
 
-        # Create the sidebar
         self.sidebar_frame = tk.Frame(root, width=200, bg="lightgray", height=500)
         self.sidebar_frame.pack(side="left", fill="y")
 
-        # Create the main area
         self.main_area = tk.Frame(root, bg="blue")
         self.main_area.pack(expand=True, fill="both", side="right")
 
-        # Sidebar buttons and commands
         self.buttons = [
             ("Dashboard", lambda: self.raise_frame(DashboardFrame(self.main_area))),
             ("Patients", lambda: self.raise_frame(PatientsFrame(self.main_area))),
@@ -52,7 +45,6 @@ class MainPage:
             button.pack(fill="x", padx=10, pady=10)
 
 
-        # Start on the Dashboard frame
         self.current_frame = DashboardFrame(self.main_area)
         self.current_frame.pack(fill="both", expand=True)
 
@@ -71,12 +63,7 @@ class MainPage:
         self.sidebar_open = not self.sidebar_open
 
     def raise_frame(self, new_frame):
-        # Destroy the current frame
         self.current_frame.destroy()
-
-        # Assign the new frame as the current frame
         self.current_frame = new_frame
-
-        # Pack the new frame
         self.current_frame.pack(fill="both", expand=True)
         
