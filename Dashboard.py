@@ -1,49 +1,41 @@
 import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
+from PIL import Image, ImageTk
+
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class DashboardFrame(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master, bg="white", height=10000, padx=10, pady=10)
+        image = Image.open("hospital.jpeg")
+        photo = ImageTk.PhotoImage(image)
+        image_label = tk.Label(self, image=photo)
+        image_label.image = photo 
+        image_label.place(relwidth=1, relheight=1)
+        title_label = tk.Label(self, text="Welcome to Meditrack App", font=("Helvetica", 60, "bold"), fg="white")
+        title_label.pack(pady=40)
+        button_frame = tk.Frame(self)
+        button_frame.pack(pady=80)
+        patient_button = tk.Button(button_frame, text="I'm a Patient", command=self.patient_login)
+        nurse_button = tk.Button(button_frame, text="I'm a Nurse", command=self.nurse_login)
+        doctor_button = tk.Button(button_frame, text="I'm a Doctor", command=self.doctor_login)
+        admin_button = tk.Button(button_frame, text="I'm an Admin", command=self.admin_login)
+        patient_button.pack(side="left", fill="both", expand=True, padx=10)
+        nurse_button.pack(side="left", fill="both", expand=True, padx=10)
+        doctor_button.pack(side="left", fill="both", expand=True, padx=10)
+        admin_button.pack(side="left", fill="both", expand=True, padx=10)
         self.pack_propagate(False)
+        
+    def patient_login(self):
+        pass
 
-        # Placeholder statistics
-        statistics_label = ttk.Label(self, text="Dashboard Statistics", style='TLabel', font=("Arial", 16))
-        statistics_label.pack(pady=10)
+    def nurse_login(self):
+        pass
 
-        # Placeholder table
-        table_label = ttk.Label(self, text="Table Data", style='TLabel', font=("Arial", 14))
-        table_label.pack(pady=5)
+    def doctor_login(self):
+        pass
 
-        # Create a Treeview for displaying a table
-        columns = ("Column 1", "Column 2", "Column 3")
-        table_tree = ttk.Treeview(self, columns=columns, show="headings", selectmode="browse")
-        for col in columns:
-            table_tree.heading(col, text=col)
-        table_tree.pack(pady=10)
-
-        # Insert some placeholder data into the table
-        for i in range(5):
-            table_tree.insert("", "end", values=(f"Value {i+1}", f"Value {i+2}", f"Value {i+3}"))
-
-        # Placeholder pie chart
-        pie_chart_label = ttk.Label(self, text="Pie Chart", style='TLabel', font=("Arial", 14))
-        pie_chart_label.pack(pady=5)
-
-        # Create a placeholder pie chart
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-
-        # Pie Chart
-        ax1.pie([25, 30, 45], labels=["Category A", "Category B", "Category C"], autopct='%1.1f%%', startangle=90)
-        ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-
-        # Bar Chart
-        categories = ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5"]
-        values = [10, 20, 15, 25, 30]
-        ax2.bar(categories, values, color='skyblue')
-
-        # Embed the charts in the Tkinter window
-        canvas = FigureCanvasTkAgg(fig, master=self)
-        canvas.get_tk_widget().pack(pady=10)
+    def admin_login(self):
+        pass
