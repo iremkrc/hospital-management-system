@@ -40,8 +40,6 @@ class MainPage:
         self.buttons = [
             ("Dashboard", lambda: self.raise_frame(DashboardFrame(self.main_area))),
             ("Patients", lambda: self.raise_frame(PatientsFrame(self.main_area))),
-            ("Appointments", lambda: self.raise_frame(AppointmentsFrame(self.main_area))),
-            ("Prescriptions", lambda: self.raise_frame(tk.Frame(self.main_area))),
             ("Nurses", lambda: self.raise_frame(NursesFrame(self.main_area))),
             ("Doctors", lambda: self.raise_frame(DoctorsFrame(self.main_area))),
             ("Admin", lambda: self.raise_frame(AdminFrame(self.main_area))) 
