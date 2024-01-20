@@ -11,7 +11,7 @@ class MainPage:
     def __init__(self, root):
         self.root = root
         self.root.title("Hospital Management System")
-        self.root.geometry('1000x600')
+        self.root.geometry('1200x600')
 
         # Initialize the sidebar state
         self.sidebar_open = True
