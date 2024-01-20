@@ -43,14 +43,23 @@ class NursesFrame(tk.Frame):
         if not nurse_id or not password:
             messagebox.showerror("Login Failed", "Nurse ID and Password cannot be empty.")
             return
-
+        nurse_name = self.get_nurse_name(nurse_id)
         if self.authenticate_nurse(nurse_id, password):
-            messagebox.showinfo("Login Successful", "Welcome!")
+            messagebox.showinfo("Login Successful", f"Welcome, Nurse {nurse_name}!")
             self.clear_login_ui()
             self.setup_main_menu()
         else:
             messagebox.showerror("Login Failed", "Invalid Nurse ID or password")
 
+    def get_nurse_name(self, nurse_id):
+        query = "SELECT e.Name FROM nurse n JOIN employee e ON n.EmployeeId = e.EmployeeId WHERE n.EmployeeId = %s;"
+        self.db_cursor.execute(query, (nurse_id,))
+        result = self.db_cursor.fetchone()
+        if result:
+            return result[0]
+        else:
+            return "Unknown"
+    
     def authenticate_nurse(self, nurse_id, password):
         query = "SELECT * FROM nurse WHERE nurse.employeeId = %s;"
         self.db_cursor.execute(query, (nurse_id,))
@@ -137,7 +146,7 @@ class NursesFrame(tk.Frame):
         certificates_tree = ttk.Treeview(self, columns=columns, show='headings')
         for col in columns:
             certificates_tree.heading(col, text=col)
-            certificates_tree.column(col, width=200)  # Adjust the width as needed 
+            certificates_tree.column(col, width=200)
         self.display_certificates(certificates_tree)    
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=5)
     
