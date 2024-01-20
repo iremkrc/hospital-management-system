@@ -22,6 +22,7 @@ class DoctorsFrame(tk.Frame):
         self.db_cursor.execute("USE comp306project")
         self.pack(fill="both", expand=True)
         self.selected_patient_var = tk.StringVar()
+        self.prescription_id_var = tk.StringVar()
         self.showing_upcoming = False 
         self.setup_login_ui()
 
@@ -39,18 +40,26 @@ class DoctorsFrame(tk.Frame):
     def doctor_login(self):
         doctor_id = self.doctor_id_var.get()
         password = self.doctor_password_var.get()
-
         if not doctor_id or not password:
             messagebox.showerror("Login Failed", "Doctor ID and Password cannot be empty.")
             return
-
+        doctor_name = self.get_doctor_name(doctor_id) 
         if self.authenticate_doctor(doctor_id, password):
-            messagebox.showinfo("Login Successful", "Welcome!")
+            messagebox.showinfo("Login Successful", f"Welcome, Dr. {doctor_name}!") 
             self.clear_login_ui()
             self.setup_main_menu()
         else:
             messagebox.showerror("Login Failed", "Invalid Doctor ID or password")
 
+    def get_doctor_name(self, doctor_id):
+        query = "SELECT e.Name FROM doctor d JOIN employee e ON d.EmployeeId = e.EmployeeId WHERE d.EmployeeId = %s;"
+        self.db_cursor.execute(query, (doctor_id,))
+        result = self.db_cursor.fetchone()
+        if result:
+            return result[0]
+        else:
+            return "Unknown"
+    
     def authenticate_doctor(self, doctor_id, password):
         query = "SELECT * FROM doctor WHERE doctor.employeeId = %s;"
         self.db_cursor.execute(query, (doctor_id,))
@@ -61,30 +70,6 @@ class DoctorsFrame(tk.Frame):
             return True
         else:
             return False
-    
-    def load_doctor_functions(self):
-        self.patient_list_label = ttk.Label(self.functional_frame, text="Patients", font=("Arial", 16))
-        self.patient_list_label.pack(pady=10)
-        self.patient_filter_var = tk.StringVar()
-        self.patient_filter_entry = ttk.Entry(self.functional_frame, textvariable=self.patient_filter_var)
-        self.patient_filter_entry.pack()
-        self.patient_listbox = tk.Listbox(self.functional_frame)
-        self.patient_listbox.pack(pady=10)
-        self.display_patients()
-        self.prescription_label = ttk.Label(self.functional_frame, text="Write Prescription", font=("Arial", 16))
-        self.prescription_label.pack(pady=10)
-        ttk.Label(self.functional_frame, text="Select Patient:").pack()
-        self.selected_patient_var = tk.StringVar()
-        self.selected_patient_combobox = ttk.Combobox(self.functional_frame, textvariable=self.selected_patient_var, state="readonly")
-        self.selected_patient_combobox.pack()
-        ttk.Label(self.functional_frame, text="Prescription:").pack()
-        self.prescription_text = scrolledtext.ScrolledText(self.functional_frame, wrap=tk.WORD, height=5)
-        self.prescription_text.pack(pady=10)
-        ttk.Button(self.functional_frame, text="Issue Prescription", command=self.issue_prescription).pack()
-        self.appointment_list_label = ttk.Label(self.functional_frame, text="Appointments", font=("Arial", 16))
-        self.appointment_list_label.pack(pady=10)
-        self.appointment_listbox = tk.Listbox(self.functional_frame)
-        self.appointment_listbox.pack(pady=10)
 
     def clear_login_ui(self):
         for widget in self.winfo_children():
@@ -100,7 +85,7 @@ class DoctorsFrame(tk.Frame):
         self.clear_ui()
         ttk.Label(self, text="My Patients", font=("Arial", 16)).pack(pady=10)
         
-        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "Sex")
         patient_tree = ttk.Treeview(self, columns=columns, show='headings')
 
         for col in columns:
@@ -160,7 +145,8 @@ class DoctorsFrame(tk.Frame):
     def show_prescription_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Select Patient for Prescription", font=("Arial", 16)).pack(pady=10)
-        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
+
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "Sex")
         self.patient_tree = ttk.Treeview(self, columns=columns, show='headings')
 
         for col in columns:
@@ -169,14 +155,40 @@ class DoctorsFrame(tk.Frame):
         self.display_patients(self.patient_tree)
         self.patient_tree.pack(pady=10)
         self.patient_tree.bind('<<TreeviewSelect>>', self.on_patient_selected)
-
-        ttk.Label(self, text="Prescription:").pack()
-        self.prescription_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=10)
-        self.prescription_text.pack(pady=10)
-
+        ttk.Label(self, text="Diagnosis:").pack()
+        self.diagnosis_var = tk.StringVar()
+        ttk.Entry(self, textvariable=self.diagnosis_var).pack()
+        ttk.Label(self, text="Medicines (one per line):").pack()
+        self.medicines_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=5)
+        self.medicines_text.pack(pady=10)
         ttk.Button(self, text="Issue Prescription", command=self.issue_prescription).pack(pady=10)
+        ttk.Button(self, text="Show Prescriptions", command=self.show_prescriptions).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
     
+    def show_prescriptions(self):
+        self.clear_ui()
+        ttk.Label(self, text="Patients and Prescriptions", font=("Arial", 16)).pack(pady=10)
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "Sex", "PrescriptionId", "Diagnosis", "Medicine", "WritingDate")
+        combined_tree = ttk.Treeview(self, columns=columns, show='headings')
+        for col in columns:
+            combined_tree.heading(col, text=col)
+            combined_tree.column(col, width=95) 
+        query_combined = "SELECT p.PatientSSN, p.PhoneNumber, p.Name, p.BirthDate, p.BloodType, p.Sex, " \
+                    "pr.PrescriptionId, pr.Diagnosis, pm.Medicine, w.WritingDate " \
+                    "FROM patient p " \
+                    "LEFT JOIN writes w ON p.PatientSSN = w.PatientSSN " \
+                    "LEFT JOIN prescription pr ON w.PrescriptionId = pr.PrescriptionId " \
+                    "LEFT JOIN prescription_medicine pm ON pr.PrescriptionId = pm.PrescriptionId " \
+                    "WHERE w.DoctorId = %s;" 
+        self.db_cursor.execute(query_combined, (self.doctor_id,)) 
+        combined_data = self.db_cursor.fetchall()
+        for data in combined_data:
+            combined_tree.insert("", 'end', values=data)
+
+        combined_tree.pack(pady=10)
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+
+
     def on_patient_selected(self, event):
         selected = event.widget.selection()
         if selected:
@@ -188,13 +200,28 @@ class DoctorsFrame(tk.Frame):
         selected_items = self.patient_tree.selection()
         if selected_items:
             selected_patient = self.patient_tree.item(selected_items[0])['values']
-            prescription = self.prescription_text.get("1.0", tk.END).strip()
-            if prescription:
+            diagnosis = self.diagnosis_var.get().strip()
+            medicines = self.medicines_text.get("1.0", tk.END).strip().splitlines() 
+            if diagnosis and medicines:
+                query = "INSERT INTO prescription (Diagnosis) VALUES (%s);"
+                self.db_cursor.execute(query, (diagnosis,))
+                self.db_connection.commit()
+                prescription_id = self.db_cursor.lastrowid
+                for medicine in medicines:
+                    query = "INSERT INTO prescription_medicine (PrescriptionId, Medicine) VALUES (%s, %s);"
+                    self.db_cursor.execute(query, (prescription_id, medicine.strip()))
+                    self.db_connection.commit()
+                writing_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                query = "INSERT INTO writes (PatientSSN, PrescriptionId, DoctorId, WritingDate) VALUES (%s, %s, %s, %s);"
+                self.db_cursor.execute(query, (selected_patient[0], prescription_id, self.doctor_id, writing_date))
+                self.db_connection.commit()
                 patient_name = selected_patient[2]
-                messagebox.showinfo("Prescription Issued", f"Prescription {prescription} issued to Patient {patient_name}.")
-                self.prescription_text.delete("1.0", tk.END)
+                self.prescription_id_var.set(prescription_id)
+                messagebox.showinfo("Prescription Issued", f"Prescription for the disease '{diagnosis}' with medicines issued to Patient {patient_name}.")
+                self.diagnosis_var.set("")  
+                self.medicines_text.delete("1.0", tk.END)
             else:
-                messagebox.showerror("Error", "Please write a prescription.")
+                messagebox.showerror("Error", "Please provide both a diagnosis and at least one medicine.")
         else:
             messagebox.showerror("Error", "Please select a patient.")
 
@@ -204,17 +231,18 @@ class DoctorsFrame(tk.Frame):
 
     def display_patients(self, patient_tree):
         query = """
-        SELECT * 
-        FROM patient p 
-        JOIN participates par ON p.PatientSSN = par.PatientSSN 
-        JOIN doctor d ON par.EmployeeId = d.EmployeeId 
+        SELECT p.PatientSSN, p.PhoneNumber, p.Name, p.BirthDate, p.BloodType, p.Sex
+        FROM patient p
+        JOIN participates par ON p.PatientSSN = par.PatientSSN
+        JOIN doctor d ON par.EmployeeId = d.EmployeeId
         WHERE d.EmployeeId = %s;"""
         self.db_cursor.execute(query, (self.doctor_id,))
         patients = self.db_cursor.fetchall()
         for patient in patients:
-            patient_tree.insert("", 'end', values=(patient[0], patient[1], patient[2], patient[3], patient[4], patient[5], patient[6], patient[7], patient[8]))
+            patient_tree.insert("", 'end', values=(patient[0], patient[1], patient[2], patient[3], patient[4], patient[5]))
         
         patient_tree.pack(pady=10)
+
     
 
     def display_appointments(self, appointment_tree):
