@@ -2,11 +2,22 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from ScrollableFrameUtil import ScrollableFrame
+import mysql.connector
 
 
 class NursesFrame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
+        self.nurse_id = 11270 #hardcoded
+        self.db_connection = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        passwd="password",
+        auth_plugin='mysql_native_password'
+        )
+        print(self.db_connection)
+        self.db_cursor = self.db_connection.cursor(buffered=True)
+        self.db_cursor.execute("USE comp306project")
         self.pack(fill="both", expand=True)
         self.setup_login_ui()
 
@@ -47,27 +58,26 @@ class NursesFrame(tk.Frame):
         self.appointment_list_label.pack(pady=10)
         self.appointment_listbox = tk.Listbox(self.functional_frame)
         self.appointment_listbox.pack(pady=10)
-        self.update_patient_combobox()
 
     def authenticate_nurse(self, ssn, password):
         return True
-
-    def display_patients(self, listbox):
-        patients = ['Patient A', 'Patient B', 'Patient C']
-        listbox.delete(0, tk.END)
+            
+    def display_patients(self, patient_tree):
+        query = "SELECT * FROM patient p JOIN participates par ON p.PatientSSN = par.PatientSSN JOIN nurse n ON par.EmployeeId = n.EmployeeId WHERE n.EmployeeId = %s;"
+        self.db_cursor.execute(query, (self.nurse_id,))
+        patients = self.db_cursor.fetchall()
         for patient in patients:
-            listbox.insert(tk.END, patient)
+            patient_tree.insert("", 'end', values=(patient[0], patient[1], patient[2], patient[3], patient[4], patient[5], patient[6], patient[7], patient[8]))
+        
+        patient_tree.pack(pady=10)
 
-    def filter_patients(self, event):
-        filter_text = self.patient_filter_var.get()
-        self.display_patients()
-
-    def display_appointments(self, listbox):
-        # appointments = get_appointments()
-        appointments = ["1", "2", "3"]
-        listbox.delete(0, tk.END)
+    def display_appointments(self, appointment_tree):
+        query = "SELECT a.AppointmentId, a.Duration, a.Date, a.Floor, a.RoomNumber FROM appointment a JOIN participates p ON a.AppointmentId = p.AppointmentId JOIN nurse n ON p.EmployeeId = n.EmployeeId WHERE n.EmployeeId = %s;"
+        self.db_cursor.execute(query, (self.nurse_id,))
+        appointments = self.db_cursor.fetchall()
         for appointment in appointments:
-            listbox.insert(tk.END, appointment)
+            appointment_tree.insert("", 'end', values=(appointment[0], appointment[1], appointment[2], appointment[3], appointment[4]))
+        appointment_tree.pack(pady=10)
 
     def clear_ui(self):
         for widget in self.winfo_children():
@@ -79,56 +89,67 @@ class NursesFrame(tk.Frame):
 
     def setup_main_menu(self):
         self.clear_ui()
-        ttk.Button(self, text="List Patients", command=self.show_patients_ui).pack(pady=10)
-        ttk.Button(self, text="List Appointments", command=self.show_appointments_ui).pack(pady=10)
+        ttk.Button(self, text="Show My Patients", command=self.show_patients_ui).pack(pady=10)
+        ttk.Button(self, text="Show My Appointments", command=self.show_appointments_ui).pack(pady=10)
         ttk.Button(self, text="Refer Nurses", command=self.show_refer_nurses_ui).pack(pady=10)
 
     def show_patients_ui(self):
         self.clear_ui()
-        ttk.Label(self, text="Patients", font=("Arial", 16)).pack(pady=10)
-        patient_listbox = tk.Listbox(self)
-        patient_listbox.pack(pady=10)
-        self.display_patients(patient_listbox)
+        ttk.Label(self, text="My Patients", font=("Arial", 16)).pack(pady=10)
+
+        columns = ("PatientSSN", "PhoneNumber", "Name", "BirthDate", "BloodType", "City", "Street", "State", "Sex")
+        patient_tree = ttk.Treeview(self, columns=columns, show='headings')
+
+        for col in columns:
+            patient_tree.heading(col, text=col)
+            patient_tree.column(col, width=95)
+        self.display_patients(patient_tree)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def show_appointments_ui(self):
         self.clear_ui()
-        ttk.Label(self, text="Appointments", font=("Arial", 16)).pack(pady=10)
-        appointment_listbox = tk.Listbox(self)
-        appointment_listbox.pack(pady=10)
-        self.display_appointments(appointment_listbox)
+        ttk.Label(self, text="My Appointments", font=("Arial", 16)).pack(pady=10)
+        columns = ("AppointmentID", "Duration", "Date", "Floor", "RoomNumber")
+        appointment_tree = ttk.Treeview(self, columns=columns, show='headings')
+        for col in columns:
+            appointment_tree.heading(col, text=col)
+            appointment_tree.column(col, width=95)
+        self.display_appointments(appointment_tree)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def show_refer_nurses_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Refer a Nurse", font=("Arial", 16)).pack(pady=10)
-        self.nurses_listbox = tk.Listbox(self)
-        self.nurses_listbox.pack(pady=10)
-        self.display_nurses()
-        self.selected_nurse_var = tk.StringVar()
-        ttk.Label(self, text="Select Nurse:").pack()
-        self.nurses_combobox = ttk.Combobox(self, textvariable=self.selected_nurse_var, state="readonly")
-        self.update_nurse_combobox()
-        self.nurses_combobox.pack()
+        columns = ("EmployeeId", "EmployeeSSN", "Name", "Sex", "BirthDate", "Salary", "HireDate", "City", "Street", "State")
+        self.nurses_tree = ttk.Treeview(self, columns=columns, show='headings')
+
+        for col in columns:
+            self.nurses_tree.heading(col, text=col)
+            self.nurses_tree.column(col, width=95)
+        self.display_nurses(self.nurses_tree)
+
         ttk.Label(self, text="Reference Points:").pack()
         self.reference_point = tk.StringVar()
         ttk.Entry(self, textvariable=self.reference_point).pack()
         ttk.Button(self, text="Give Reference", command=self.give_reference).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
-    def display_nurses(self):
-        nurse_names = ['Nurse A', 'Nurse B', 'Nurse C']
-        for name in nurse_names:
-            self.nurses_listbox.insert(tk.END, name)
 
-    def update_nurse_combobox(self):
-        nurse_names = ['Nurse A', 'Nurse B', 'Nurse C']
-        self.nurses_combobox['values'] = nurse_names
+    def display_nurses(self, nurse_tree):
+        query = "select * from employee, nurse where nurse.employeeId = employee.employeeId;"
+        self.db_cursor.execute(query)
+        nurses = self.db_cursor.fetchall()
+        for nurse in nurses:
+            nurse_tree.insert("", 'end', values=(nurse[0], nurse[1], nurse[2], nurse[3], nurse[4], nurse[5], nurse[6], nurse[7], nurse[8], nurse[9]))
+        nurse_tree.pack(pady=10)
+
 
     def give_reference(self):
-        selected_nurse = self.selected_nurse_var.get()
+        selected_items = self.nurses_tree.selection()
         points = self.reference_point.get()
-        if selected_nurse and points:
-            messagebox.showinfo("Reference Given", f"Reference given to {selected_nurse} with {points} points.")
+        if selected_items and points.isdigit():
+            selected_nurse = self.nurses_tree.item(selected_items[0])['values']
+            nurse_name = selected_nurse[2]
+            messagebox.showinfo("Reference Given", f"Reference given to {nurse_name} with {points} points.")
         else:
-            messagebox.showerror("Error", "Please select a nurse and enter reference points.")
+            messagebox.showerror("Error", "Please select a nurse and enter valid reference points.")
