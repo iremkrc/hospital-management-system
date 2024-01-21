@@ -407,6 +407,7 @@ class AdminFrame(tk.Frame):
 
         self.show_nurses_ui()
 
+
     def delete_nurse_query(self):
         employee_id = self.selected_nurse_info[0]
         delete_cert = "DELETE FROM nurse_certificates where EmployeeId = " + str(employee_id)
@@ -675,12 +676,47 @@ class AdminFrame(tk.Frame):
 
         for col in columns:
             tree.heading(col, text=col.title())
-            tree.column(col, anchor=tk.CENTER)
+            tree.column(col, anchor=tk.CENTER) 
 
         for row in result:
             tree.insert('', tk.END, values=row)
 
         ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+def show_query_6_ui(self, illness):
+    self.clear_ui()
+
+    query = """
+    SELECT D.EmployeeId AS DoctorId, D.Title, D.Expertise,
+    P.PatientSSN AS PatientSSN, P.BirthDate, P.BloodType, PR.Diagnosis,
+    PRM.Medicine, W.WritingDate
+    FROM DOCTOR D
+    JOIN WRITES W ON D.EmployeeId = W.DoctorId
+    JOIN PATIENT P ON W.PatientSSN = P.PatientSSN
+    JOIN PRESCRIPTION PR ON W.PrescriptionId = PR.PrescriptionId
+    JOIN PRESCRIPTION_MEDICINE PRM ON PR.PrescriptionId = PRM.PrescriptionId
+    WHERE PR.Diagnosis = ?
+    ORDER BY DoctorId, WritingDate DESC
+    """
+
+    self.db_cursor.execute(query, (illness,))
+    columns = [description[0] for description in self.db_cursor.description]
+    result = self.db_cursor.fetchall()
+
+    ttk.Label(self, text="Query 6 Result", font=("Arial", 16)).pack(pady=10)
+    tree = ttk.Treeview(self, columns=columns, show='headings')
+    tree.pack(pady=10, fill=tk.BOTH, expand=True)
+
+    for col in columns:
+        tree.heading(col, text=col.title())
+        tree.column(col, anchor=tk.CENTER)
+
+    for row in result:
+        tree.insert('', tk.END, values=row)
+
+    ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+
+
 
     def show_queries_ui(self):
         self.clear_ui()
@@ -689,6 +725,7 @@ class AdminFrame(tk.Frame):
         ttk.Button(self, text="Query3", command=self.show_query_3_ui).pack(pady=10)
         ttk.Button(self, text="Query4", command=self.show_query_4_ui).pack(pady=10)
         ttk.Button(self, text="Query5", command=self.show_query_5_ui).pack(pady=10)
+        ttk.Button(self, text="Query6", command=self.show_query_6_ui).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     # def on_patient_selected(self, event):
