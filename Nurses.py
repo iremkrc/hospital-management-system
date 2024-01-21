@@ -14,7 +14,7 @@ class NursesFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="password",
+        passwd="24632463",
         auth_plugin='mysql_native_password'
         )
         self.db_cursor = self.db_connection.cursor(buffered=True)

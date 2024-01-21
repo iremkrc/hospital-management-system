@@ -10,12 +10,15 @@ class AdminFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="write your own password",
+        passwd="24632463",
         auth_plugin='mysql_native_password'
         )
         self.db_cursor = self.db_connection.cursor(buffered=True)
         self.db_cursor.execute("USE comp306project")
+        self.selected_doctor_info = None
         self.selected_nurse_info = None
+        self.selected_patient_info = None
+        
         self.pack(fill="both", expand=True)
         self.selected_patient_var = tk.StringVar()
         self.setup_login_ui()
@@ -47,7 +50,9 @@ class AdminFrame(tk.Frame):
             messagebox.showerror("Login Failed", "Invalid admin ID or password")
 
     def authenticate_admin(self, admin_id, password):
-        return True 
+        if admin_id == "admin" and password == "admin":
+            return True
+        return False 
     
     def load_admin_functions(self):
         self.patient_list_label = ttk.Label(self.functional_frame, text="Patients", font=("Arial", 16))
@@ -108,9 +113,16 @@ class AdminFrame(tk.Frame):
         for col in columns:
             patient_tree.heading(col, text=col)
             patient_tree.column(col, width=95)
+
+        def on_patient_selected(event):
+            selected_item = patient_tree.selection()[0]
+            self.selected_patient_info = patient_tree.item(selected_item)['values']
+        
+        patient_tree.bind("<<TreeviewSelect>>", on_patient_selected)
         self.display_patients(patient_tree)
 
         ttk.Button(self, text="Add Patient", command=self.add_patient_ui).pack(pady=10)
+        ttk.Button(self, text="Delete Patient", command=self.delete_patient_query).pack(pady=10)
 
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
@@ -183,6 +195,21 @@ class AdminFrame(tk.Frame):
 
         self.show_patients_ui()
 
+    def delete_patient_query(self):
+        patient_ssn = self.selected_patient_info[0]
+        delete_part = "DELETE FROM participates where PatientSSN = " + str(patient_ssn)
+        delete_patient = "DELETE FROM patient where PatientSSN = " + str(patient_ssn)
+        try:
+            self.db_cursor.execute(delete_part)
+            self.db_cursor.execute(delete_patient)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Patient deleted")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_patients_ui()
+
     def show_doctors_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Doctors", font=("Arial", 16)).pack(pady=10)
@@ -191,8 +218,16 @@ class AdminFrame(tk.Frame):
         for col in columns:
             doctors_tree.heading(col, text=col)
             doctors_tree.column(col, width=95)
+
+        def on_doctor_selected(event):
+            selected_item = doctors_tree.selection()[0]
+            self.selected_doctor_info = doctors_tree.item(selected_item)['values']
+
+        doctors_tree.bind("<<TreeviewSelect>>", on_doctor_selected)
         self.display_doctors(doctors_tree)
+
         ttk.Button(self, text="Add Doctor", command=self.add_doctor_ui).pack(pady=10)
+        ttk.Button(self, text="Delete Doctor", command=self.delete_doctor_query).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     def add_doctor_ui(self):
@@ -301,6 +336,25 @@ class AdminFrame(tk.Frame):
 
         self.show_doctors_ui()
 
+    def delete_doctor_query(self):
+        employee_id = self.selected_doctor_info[0]
+        delete_part = "DELETE FROM participates where EmployeeId = " + str(employee_id)
+        delete_writes = "DELETE FROM writes where DoctorId = " + str(employee_id)
+        delete_doctor = "DELETE FROM doctor where EmployeeId = " + str(employee_id)
+        delete_emp = "DELETE FROM employee where EmployeeId = " + str(employee_id)
+        try:
+            self.db_cursor.execute(delete_part)
+            self.db_cursor.execute(delete_writes)
+            self.db_cursor.execute(delete_doctor)
+            self.db_cursor.execute(delete_emp)
+            self.db_connection.commit()
+            tk.messagebox.showinfo("Success", "Doctor deleted")
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"An error occurred: {e}")
+            print(e)
+
+        self.show_doctors_ui()
+
     def show_nurses_ui(self):
         self.clear_ui()
         ttk.Label(self, text="Nurses", font=("Arial", 16)).pack(pady=10)
@@ -355,11 +409,17 @@ class AdminFrame(tk.Frame):
 
     def delete_nurse_query(self):
         employee_id = self.selected_nurse_info[0]
-        query_1 = "DELETE FROM nurse where EmployeeId = " + str(employee_id)
-        query_2 = "DELETE FROM employee where EmployeeId = " + str(employee_id)
+        delete_cert = "DELETE FROM nurse_certificates where EmployeeId = " + str(employee_id)
+        delete_ref = "DELETE FROM nurse_references where RefereeNurseId = " + str(employee_id)
+        delete_ref2 = "DELETE FROM nurse_references where RefererNurseId = " + str(employee_id)
+        delete_nurse = "DELETE FROM nurse where EmployeeId = " + str(employee_id)
+        delete_emp = "DELETE FROM employee where EmployeeId = " + str(employee_id)
         try:
-            self.db_cursor.execute(query_1)
-            self.db_cursor.execute(query_2)
+            self.db_cursor.execute(delete_cert)
+            self.db_cursor.execute(delete_ref)
+            self.db_cursor.execute(delete_ref2)
+            self.db_cursor.execute(delete_nurse)
+            self.db_cursor.execute(delete_emp)
             self.db_connection.commit()
             tk.messagebox.showinfo("Success", "Nurse deleted")
         except Exception as e:
@@ -631,12 +691,12 @@ class AdminFrame(tk.Frame):
         ttk.Button(self, text="Query5", command=self.show_query_5_ui).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
-    def on_patient_selected(self, event):
-        selection = self.patient_listbox.curselection()
-        if selection:
-            index = selection[0]
-            selected_patient = self.patient_listbox.get(index)
-            self.selected_patient_var.set(selected_patient)
+    # def on_patient_selected(self, event):
+    #     selection = self.patient_listbox.curselection()
+    #     if selection:
+    #         index = selection[0]
+    #         selected_patient = self.patient_listbox.get(index)
+    #         self.selected_patient_var.set(selected_patient)
 
     def filter_patients(self, event):
         filter_text = self.patient_filter_var.get()
@@ -664,7 +724,7 @@ class AdminFrame(tk.Frame):
         self.db_cursor.execute(query)
         doctors = self.db_cursor.fetchall()
         for doctor in doctors:
-            doctor_tree.insert("", 'end', values=(doctor[0], doctor[1], doctor[2], doctor[3], doctor[4], doctor[5], doctor[6], doctor[7], doctor[8], doctor[10], doctor[11], doctor[12], doctor[13]))
+            doctor_tree.insert("", 'end', values=(doctor[0], doctor[1], doctor[2], doctor[3], doctor[4], doctor[5], doctor[6], doctor[7], doctor[8], doctor[9], doctor[11], doctor[12], doctor[13]))
         doctor_tree.pack(pady=10)
 
 

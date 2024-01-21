@@ -30,14 +30,14 @@ class MainPage:
         self.main_area = tk.Frame(root, bg="blue")
         self.main_area.pack(expand=True, fill="both", side="right")
 
+        func = [lambda: self.raise_frame(PatientsFrame(self.main_area)), lambda: self.raise_frame(NursesFrame(self.main_area)), lambda: self.raise_frame(DoctorsFrame(self.main_area)), lambda: self.raise_frame(AdminFrame(self.main_area))]
+
         self.buttons = [
-            ("Dashboard", lambda: self.raise_frame(DashboardFrame(self.main_area))),
-            ("Patients", lambda: self.raise_frame(PatientsFrame(self.main_area))),
-            ("Nurses", lambda: self.raise_frame(NursesFrame(self.main_area))),
-            ("Doctors", lambda: self.raise_frame(DoctorsFrame(self.main_area))),
-            ("Admin", lambda: self.raise_frame(AdminFrame(self.main_area))) 
-
-
+            ("Dashboard", lambda: self.raise_frame(DashboardFrame(self.main_area, func))),
+            ("Patients", func[0]),
+            ("Nurses", func[1]),
+            ("Doctors", func[2]),
+            ("Admin", func[3]) 
         ]
     
         for text, command in self.buttons:
@@ -45,7 +45,7 @@ class MainPage:
             button.pack(fill="x", padx=10, pady=10)
 
 
-        self.current_frame = DashboardFrame(self.main_area)
+        self.current_frame = DashboardFrame(self.main_area, func)
         self.current_frame.pack(fill="both", expand=True)
 
     def create_header(self):
