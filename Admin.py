@@ -10,7 +10,7 @@ class AdminFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="pwd",
+        passwd="password",
         auth_plugin='mysql_native_password'
         )
         self.db_cursor = self.db_connection.cursor(buffered=True)
@@ -28,7 +28,7 @@ class AdminFrame(tk.Frame):
         self.login_label.pack(pady=10)
         self.admin_id_var = tk.StringVar()
         self.admin_password_var = tk.StringVar()
-        ttk.Label(self, text="admin ID:").pack()
+        ttk.Label(self, text="Admin ID:").pack()
         ttk.Entry(self, textvariable=self.admin_id_var).pack()
         ttk.Label(self, text="Password:").pack()
         ttk.Entry(self, textvariable=self.admin_password_var, show="*").pack()
@@ -39,7 +39,7 @@ class AdminFrame(tk.Frame):
         password = self.admin_password_var.get()
 
         if not admin_id or not password:
-            messagebox.showerror("Login Failed", "admin ID and Password cannot be empty.")
+            messagebox.showerror("Login Failed", "Admin ID and Password cannot be empty.")
             return
 
         if self.authenticate_admin(admin_id, password):
@@ -610,7 +610,27 @@ class AdminFrame(tk.Frame):
 
     def show_query_3_ui(self):
         self.clear_ui()
-        query = "select * from doctor where doctor.employeeid > 900000;"
+        query = """
+                SELECT N.EmployeeId, R.RefererNurseId
+                FROM NURSE N
+                JOIN NURSE_REFERENCES R
+                ON N.EmployeeId = R.RefereeNurseId
+                WHERE EXISTS (
+                    SELECT *
+                    FROM PATIENT P
+                    JOIN PARTICIPATES PA
+                    ON P.PatientSSN = PA.PatientSSN 
+                    JOIN WRITES W
+                    ON W.PatientSSN = P.PatientSSN
+                    JOIN PRESCRIPTION PR
+                    ON PR.PrescriptionId = W.PrescriptionId
+                    JOIN PRESCRIPTION_MEDICINE M
+                    ON PR.PrescriptionId = M.PrescriptionId
+                    WHERE PA.EmployeeId = N.EmployeeID 
+                        AND PR.Diagnosis = 'Hypertension'
+                        AND M.Medicine = 'Cardiovaxin'
+                    );
+                """
         self.db_cursor.execute(query)
         columns = [description[0] for description in self.db_cursor.description]
         result = self.db_cursor.fetchall()
@@ -683,38 +703,39 @@ class AdminFrame(tk.Frame):
 
         ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
 
-def show_query_6_ui(self, illness):
-    self.clear_ui()
+    def show_query_6_ui(self, illness='Hypertension'):
+        
+        self.clear_ui()
+        
+        query = """
+        SELECT D.EmployeeId AS DoctorId, D.Title, D.Expertise,
+        P.PatientSSN AS PatientSSN, P.BirthDate, P.BloodType, PR.Diagnosis,
+        PRM.Medicine, W.WritingDate
+        FROM DOCTOR D
+        JOIN WRITES W ON D.EmployeeId = W.DoctorId
+        JOIN PATIENT P ON W.PatientSSN = P.PatientSSN
+        JOIN PRESCRIPTION PR ON W.PrescriptionId = PR.PrescriptionId
+        JOIN PRESCRIPTION_MEDICINE PRM ON PR.PrescriptionId = PRM.PrescriptionId
+        WHERE PR.Diagnosis = %s
+        ORDER BY DoctorId, WritingDate DESC
+        """
 
-    query = """
-    SELECT D.EmployeeId AS DoctorId, D.Title, D.Expertise,
-    P.PatientSSN AS PatientSSN, P.BirthDate, P.BloodType, PR.Diagnosis,
-    PRM.Medicine, W.WritingDate
-    FROM DOCTOR D
-    JOIN WRITES W ON D.EmployeeId = W.DoctorId
-    JOIN PATIENT P ON W.PatientSSN = P.PatientSSN
-    JOIN PRESCRIPTION PR ON W.PrescriptionId = PR.PrescriptionId
-    JOIN PRESCRIPTION_MEDICINE PRM ON PR.PrescriptionId = PRM.PrescriptionId
-    WHERE PR.Diagnosis = ?
-    ORDER BY DoctorId, WritingDate DESC
-    """
+        self.db_cursor.execute(query, (illness,))
+        columns = [description[0] for description in self.db_cursor.description]
+        result = self.db_cursor.fetchall()
+        
+        ttk.Label(self, text="Query 6 Result", font=("Arial", 16)).pack(pady=10)
+        tree = ttk.Treeview(self, columns=columns, show='headings')
+        tree.pack(pady=10, fill=tk.BOTH, expand=True)
 
-    self.db_cursor.execute(query, (illness,))
-    columns = [description[0] for description in self.db_cursor.description]
-    result = self.db_cursor.fetchall()
+        for col in columns:
+            tree.heading(col, text=col.title())
+            tree.column(col, anchor=tk.CENTER)
 
-    ttk.Label(self, text="Query 6 Result", font=("Arial", 16)).pack(pady=10)
-    tree = ttk.Treeview(self, columns=columns, show='headings')
-    tree.pack(pady=10, fill=tk.BOTH, expand=True)
+        for row in result:
+            tree.insert('', tk.END, values=row)
 
-    for col in columns:
-        tree.heading(col, text=col.title())
-        tree.column(col, anchor=tk.CENTER)
-
-    for row in result:
-        tree.insert('', tk.END, values=row)
-
-    ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
+        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
 
 
 
@@ -783,3 +804,4 @@ def show_query_6_ui(self, illness):
                 self.sql_listbox.insert(tk.END, name)
         except Exception as e:
             print(e)
+            
