@@ -10,7 +10,7 @@ class AdminFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="password",
+        passwd="pwd",
         auth_plugin='mysql_native_password'
         )
         self.db_cursor = self.db_connection.cursor(buffered=True)
@@ -582,7 +582,24 @@ class AdminFrame(tk.Frame):
 
     def show_query_2_ui(self):
         self.clear_ui()
-        query = "select * from doctor where doctor.employeeid > 900000;"
+        query = """
+        Select distinct A.PatientSSN, A.Name
+        From patient A, writes W, prescription P, prescription_medicine M
+        Where A.PatientSSN = W.PatientSSN 
+            and W.PrescriptionId = P.PrescriptionId 
+            and P.PrescriptionId = M.PrescriptionId
+            and M.Medicine NOT IN (SELECT distinct M.Medicine
+                                    FROM writes W, prescription P, prescription_medicine M
+                                    WHERE W.PrescriptionId = P.PrescriptionId 
+                                        and P.PrescriptionId = M.PrescriptionId 
+                                        and P.Diagnosis = 'Flu')
+        intersect
+        Select distinct A.PatientSSN, A.Name
+        From patient A, writes W, prescription P, prescription_medicine M
+        Where A.PatientSSN = W.PatientSSN 
+            and W.PrescriptionId = P.PrescriptionId 
+            and P.Diagnosis = 'Common Cold';
+        """
         self.db_cursor.execute(query)
         columns = [description[0] for description in self.db_cursor.description]
         result = self.db_cursor.fetchall()
@@ -684,26 +701,8 @@ class AdminFrame(tk.Frame):
 
         ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
 
-    def show_query_5_ui(self):
-        self.clear_ui()
-        query = "select * from doctor where doctor.employeeid > 900000;"
-        self.db_cursor.execute(query)
-        columns = [description[0] for description in self.db_cursor.description]
-        result = self.db_cursor.fetchall()
-        ttk.Label(self, text="Query 5 Result", font=("Arial", 16)).pack(pady=10)
-        tree = ttk.Treeview(self, columns=columns, show='headings')
-        tree.pack(pady=10, fill=tk.BOTH, expand=True)
 
-        for col in columns:
-            tree.heading(col, text=col.title())
-            tree.column(col, anchor=tk.CENTER) 
-
-        for row in result:
-            tree.insert('', tk.END, values=row)
-
-        ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
-
-    def show_query_6_ui(self, illness='Hypertension'):
+    def show_query_5_ui(self, illness='Hypertension'):
         
         self.clear_ui()
         
@@ -746,7 +745,6 @@ class AdminFrame(tk.Frame):
         ttk.Button(self, text="Query3", command=self.show_query_3_ui).pack(pady=10)
         ttk.Button(self, text="Query4", command=self.show_query_4_ui).pack(pady=10)
         ttk.Button(self, text="Query5", command=self.show_query_5_ui).pack(pady=10)
-        ttk.Button(self, text="Query6", command=self.show_query_6_ui).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
     # def on_patient_selected(self, event):
