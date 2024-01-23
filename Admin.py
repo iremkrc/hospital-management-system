@@ -10,7 +10,7 @@ class AdminFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="Keremiis123!",
+        passwd="pwd",
         auth_plugin='mysql_native_password'
         )
         self.db_cursor = self.db_connection.cursor(buffered=True)
@@ -749,8 +749,6 @@ class AdminFrame(tk.Frame):
         self.sql_text.pack(pady=10)
         ttk.Button(self, text="Execute", command=self.execute_sql).pack(pady=10)
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
-        scrollbar = tk.Scrollbar(self)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
     def execute_sql(self):
         sql = self.sql_text.get("1.0", tk.END)
