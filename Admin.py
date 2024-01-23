@@ -588,7 +588,7 @@ class AdminFrame(tk.Frame):
         Where A.PatientSSN = W.PatientSSN 
             and W.PrescriptionId = P.PrescriptionId 
             and P.PrescriptionId = M.PrescriptionId
-            and M.Medicine NOT IN (SELECT distinct M.Medicine
+            and M.Medicine NOT IN (SELECT distinct D.Medicine
                                     FROM writes R, prescription E, prescription_medicine D
                                     WHERE R.PrescriptionId = E.PrescriptionId 
                                         and E.PrescriptionId = D.PrescriptionId 
