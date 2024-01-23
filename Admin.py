@@ -10,7 +10,7 @@ class AdminFrame(tk.Frame):
         self.db_connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="pwd",
+        passwd="Keremiis123!",
         auth_plugin='mysql_native_password'
         )
         self.db_cursor = self.db_connection.cursor(buffered=True)
@@ -520,18 +520,7 @@ class AdminFrame(tk.Frame):
         self.show_nurses_ui()
 
 
-    def show_sql_ui(self):
-        self.clear_ui()
-        ttk.Label(self, text="Enter an SQL query:", font=("Arial", 16)).pack(pady=10)
-        self.sql_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=5)
-        self.sql_text.pack(pady=10)
-        ttk.Button(self, text="Execute", command=self.execute_sql).pack(pady=10)
-        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
-        ttk.Label(self, text="Result:", font=("Arial", 16)).pack(pady=10)
-        scrollbar = tk.Scrollbar(self)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.sql_listbox = tk.Listbox(self, yscrollcommand=scrollbar.set)
-        self.sql_listbox.pack(pady=10)
+
 
     def show_query_1_ui(self):
         self.clear_ui()
@@ -676,7 +665,23 @@ class AdminFrame(tk.Frame):
 
     def show_query_4_ui(self):
         self.clear_ui()
-        query = "select * from doctor where doctor.employeeid > 900000;"
+        query = """
+        SELECT 
+        N.EmployeeId AS NurseId,
+        EN.Name AS NurseName,
+        D.EmployeeId AS DoctorId,
+        ED.Name AS DoctorName,
+        COUNT(*) AS CommonAppointments
+        FROM PARTICIPATES PN
+        JOIN NURSE N ON PN.EmployeeId = N.EmployeeId
+        JOIN EMPLOYEE EN ON N.EmployeeId = EN.EmployeeId
+        JOIN PARTICIPATES PD ON PN.AppointmentId = PD.AppointmentId
+        JOIN DOCTOR D ON PD.EmployeeId = D.EmployeeId
+        JOIN EMPLOYEE ED ON D.EmployeeId = ED.EmployeeId
+        WHERE PN.EmployeeId != PD.EmployeeId
+        GROUP BY N.EmployeeId, EN.Name, D.EmployeeId, ED.Name
+        ORDER BY CommonAppointments DESC;
+        """
         self.db_cursor.execute(query)
         columns = [description[0] for description in self.db_cursor.description]
         result = self.db_cursor.fetchall()
@@ -724,7 +729,7 @@ class AdminFrame(tk.Frame):
         columns = [description[0] for description in self.db_cursor.description]
         result = self.db_cursor.fetchall()
         
-        ttk.Label(self, text="Query 6 Result", font=("Arial", 16)).pack(pady=10)
+        ttk.Label(self, text="Query 5 Result", font=("Arial", 16)).pack(pady=10)
         tree = ttk.Treeview(self, columns=columns, show='headings')
         tree.pack(pady=10, fill=tk.BOTH, expand=True)
 
@@ -737,6 +742,42 @@ class AdminFrame(tk.Frame):
 
         ttk.Button(self, text="Back", command=self.show_queries_ui).pack(pady=10)
 
+    def show_sql_ui(self):
+        self.clear_ui()
+        ttk.Label(self, text="Enter an SQL query:", font=("Arial", 16)).pack(pady=10)
+        self.sql_text = scrolledtext.ScrolledText(self, wrap=tk.WORD, height=5)
+        self.sql_text.pack(pady=10)
+        ttk.Button(self, text="Execute", command=self.execute_sql).pack(pady=10)
+        ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
+        scrollbar = tk.Scrollbar(self)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def execute_sql(self):
+        sql = self.sql_text.get("1.0", tk.END)
+        try:
+            self.db_cursor.execute(sql)
+            columns = [description[0] for description in self.db_cursor.description]
+            results = self.db_cursor.fetchall()
+
+            if hasattr(self, 'result_label'):
+                self.result_label.destroy()
+                self.tree.destroy()
+
+            self.result_label = ttk.Label(self, text="Result", font=("Arial", 16))
+            self.result_label.pack(pady=10)
+
+            self.tree = ttk.Treeview(self, columns=columns, show='headings')
+            self.tree.pack(pady=10, fill=tk.BOTH, expand=True)
+
+            for col in columns:
+                self.tree.heading(col, text=col.title())
+                self.tree.column(col, anchor=tk.CENTER)
+
+            for row in results:
+                self.tree.insert('', tk.END, values=row)
+
+        except Exception as e:
+            print(e)
 
 
     def show_queries_ui(self):
@@ -793,14 +834,5 @@ class AdminFrame(tk.Frame):
             nurse_tree.insert("", 'end', values=(nurse[0], nurse[1], nurse[2], nurse[3], nurse[4], nurse[5], nurse[6], nurse[7], nurse[8], nurse[9]))
         nurse_tree.pack(pady=10)
 
-    def execute_sql(self):
-        self.sql_listbox.delete(0, tk.END)
-        sql = self.sql_text.get("1.0", tk.END)
-        try:
-            self.db_cursor.execute(sql)
-            results = self.db_cursor.fetchall()
-            for name in results:
-                self.sql_listbox.insert(tk.END, name)
-        except Exception as e:
-            print(e)
+
             
