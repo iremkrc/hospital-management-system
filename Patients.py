@@ -1,10 +1,14 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 
+from Appointments import AppointmentsFrame, get_appointments
+
 class PatientsFrame(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.pack(fill="both", expand=True)
+        self.appointments_list = []
+        self.appointments_controller = AppointmentsFrame()
         self.setup_login_ui()
 
     def setup_login_ui(self):
@@ -146,7 +150,7 @@ class PatientsFrame(tk.Frame):
         self.day_combobox['values'] = day_names
 
     def update_time_combobox(self):
-        time_names = ['12:00', '13:00', '15:00']
+        time_names = ['12:00', '13:00', '15:00',  '16:00']
         self.time_combobox['values'] = time_names
 
 
@@ -164,7 +168,7 @@ class PatientsFrame(tk.Frame):
 
 
     def display_times(self, listbox):
-        times = ['12:00', '13:00', '15:00']
+        times = ['12:00', '13:00', '15:00', '16:00']
         listbox.delete(0, tk.END)
         for time in times:
             listbox.insert(tk.END, time)
@@ -189,8 +193,8 @@ class PatientsFrame(tk.Frame):
 
 
     def display_appointments(self, listbox):
-        # appointments = get_appointments()
-        appointments = ["1", "2", "3"]
+        appointments = get_appointments(self)
+        #appointments = ["1", "2", "3"]
         listbox.delete(0, tk.END)
         for appointment in appointments:
             listbox.insert(tk.END, appointment)
@@ -201,3 +205,42 @@ class PatientsFrame(tk.Frame):
         listbox.delete(0, tk.END)
         for c in companions:
             listbox.insert(tk.END, c)
+
+    
+    def add_appointment_gui(self, selected_doctor, selected_day, selected_time):
+        appointment_details = f"Doctor: {selected_doctor}\nDay: {selected_day}\nTime: {selected_time}"
+        self.appointments_controller.add_appointment(appointment_details)
+        messagebox.showinfo("Appointment added", "Appointment has been successfully added!")
+
+    """def make_appointment(self):
+        selected_doctor = self.selected_doctor_var.get()
+        appointment_text = self.appointment_text.get("1.0", tk.END).strip()
+        selected_day = self.selected_day_var.get()
+        selected_time = self.selected_time_var.get()
+
+        if selected_doctor and appointment_text and selected_day and selected_time:
+            self.add_appointment_gui(selected_doctor, selected_day, selected_time)
+            self.appointment_text.delete("1.0", tk.END)
+        else:
+            messagebox.showerror("Error", "Please fill in all the appointment details.")"""
+    
+
+    def make_appointment(self):
+        selected_doctor_index = self.doctor_combobox.current()
+        selected_doctor = self.doctor_combobox.get() if selected_doctor_index != -1 else None
+        appointment_text = self.appointment_text.get("1.0", tk.END).strip()
+        selected_day = self.selected_day_var.get()
+        selected_time = self.selected_time_var.get()
+
+        if selected_doctor and appointment_text and selected_day and selected_time:
+            self.add_appointment_gui(selected_doctor, selected_day, selected_time)
+            self.appointment_text.delete("1.0", tk.END)
+        else:
+            messagebox.showerror("Error", "Please fill in all the appointment details.")
+
+
+    def add_appointment(self, appointment):
+        self.appointments_list.append(appointment)
+
+    def get_appointments(self):
+        return self.appointments_list
