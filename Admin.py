@@ -589,16 +589,17 @@ class AdminFrame(tk.Frame):
             and W.PrescriptionId = P.PrescriptionId 
             and P.PrescriptionId = M.PrescriptionId
             and M.Medicine NOT IN (SELECT distinct M.Medicine
-                                    FROM writes W, prescription P, prescription_medicine M
-                                    WHERE W.PrescriptionId = P.PrescriptionId 
-                                        and P.PrescriptionId = M.PrescriptionId 
+                                    FROM writes R, prescription E, prescription_medicine D
+                                    WHERE R.PrescriptionId = E.PrescriptionId 
+                                        and E.PrescriptionId = D.PrescriptionId 
                                         and P.Diagnosis = 'Flu')
         intersect
         Select distinct A.PatientSSN, A.Name
         From patient A, writes W, prescription P, prescription_medicine M
         Where A.PatientSSN = W.PatientSSN 
             and W.PrescriptionId = P.PrescriptionId 
-            and P.Diagnosis = 'Common Cold';
+            and P.Diagnosis = 'Common Cold'
+            and A.BloodType = 'A+'
         """
         self.db_cursor.execute(query)
         columns = [description[0] for description in self.db_cursor.description]
