@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from ScrollableFrameUtil import ScrollableFrame
 import mysql.connector
 import datetime
 
