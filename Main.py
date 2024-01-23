@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from Appointments import AppointmentsFrame
 from Dashboard import DashboardFrame
 from Nurses import NursesFrame
 from Doctors import DoctorsFrame

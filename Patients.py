@@ -332,9 +332,9 @@ class PatientsFrame(tk.Frame):
 ######################################################################################## 
     def show_appointments_ui(self):
         self.clear_ui()
-        ttk.Label(self, text="Appointments", font=("Arial", 16)).pack(pady=10)
-        appointment_listbox = tk.Listbox(self)
-        appointment_listbox.pack(pady=10)
+        ttk.Label(self, text="Appointments", font=("Arial", 16)).pack(pady=10)    
+        self.appointment_listbox = tk.Listbox(self)
+        self.appointment_listbox.pack(pady=10)
         self.display_appointments(self.patient_ssn_var.get())
         ttk.Button(self, text="Back", command=self.setup_main_menu).pack(pady=10)
 
